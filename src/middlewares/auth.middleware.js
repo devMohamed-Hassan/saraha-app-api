@@ -8,45 +8,39 @@ export const types = {
 };
 Object.freeze(types);
 
-export const decodeToken = async (tokenType = types.access, token) => {
-  let secret = "";
-
-  if (tokenType === types.access) {
-    secret = process.env.ACCESS_TOKEN_SECRET;
-  } else if (tokenType === types.refresh) {
-    secret = process.env.REFRESH_TOKEN_SECRET;
-  } else {
-    throw new Error("Invalid token type", { cause: 400 });
+export const decodeToken = async ({
+  tokenType = types.access,
+  token,
+  next,
+}) => {
+  try {
+    let secret = "";
+    if (tokenType === types.access) {
+      secret = process.env.ACCESS_TOKEN_SECRET;
+    } else if (tokenType === types.refresh) {
+      secret = process.env.REFRESH_TOKEN_SECRET;
+    } else {
+      return next(new Error("Invalid token type", { cause: 400 }));
+    }
+    const payload = jwt.verify(token, secret);
+    const user = await findById(userModel, payload._id);
+    if (!user) {
+      return next(new Error("User Not Found", { cause: 404 }));
+    }
+    return payload;
+  } catch (error) {
+    return next(new Error(error.message, { cause: 400 }));
   }
-
-  const payload = jwt.verify(token, secret);
-
-  const user = await findById(userModel, payload._id);
-  if (!user) {
-    throw new Error("User Not Found", { cause: 404 });
-  }
-
-  return payload;
 };
 
-export const auth = () => {
+export const auth = (req, res, next) => {
   return async (req, res, next) => {
-    try {
-      const { token } = req.headers;
-      if (!token) {
-        throw new Error("Token is required", { cause: 401 });
-      }
-
-      const payload = await decodeToken(types.access, token);
-      const user = await findById(userModel, payload._id);
-      if (!user) {
-        throw new Error("User not found", { cause: 404 });
-      }
-
-      req.user = user;
-      next();
-    } catch (error) {
-      next(error);
-    }
+    const { authorization } = req.headers;
+    const user = await decodeToken({
+      token: authorization,
+      next,
+    });
+    req.user = user;
+    next();
   };
 };
