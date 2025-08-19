@@ -115,22 +115,32 @@ export const refreshToken = async (req, res, next) => {
   if (!token) {
     throw new Error("Token is required", { cause: 401 });
   }
-  const user = decodeToken(types.refresh, token);
-  const accessToken = jwt.sign(
-    {
-      _id: user._id,
-      email: user.email,
-    },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: `20S`,
+  try {
+    const payload = await decodeToken(types.refresh, token);
+    const accessToken = jwt.sign(
+      {
+        _id: payload._id,
+        email: payload.email,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: `20s`,
+      }
+    );
+    handleSuccess({
+      res,
+      statusCode: 202,
+      data: {
+        accessToken,
+      },
+    });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return next(new Error("Refresh token expired", { cause: 401 }));
     }
-  );
-  handleSuccess({
-    res,
-    statusCode: 202,
-    data: {
-      accessToken,
-    },
-  });
+    if (error.name === "JsonWebTokenError") {
+      return next(new Error("Invalid token", { cause: 401 }));
+    }
+    return next(error);
+  }
 };

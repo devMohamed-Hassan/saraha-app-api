@@ -28,9 +28,13 @@ const bootstrap = async (app, express) => {
   app.use("/message", messageRouter);
 
   app.use((err, req, res, next) => {
-    res.status(err.statusCode || 500).json({
+    let statusCode = err.cause || err.statusCode || 500;
+    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
+      statusCode = 401;
+    }
+    res.status(statusCode).json({
       errMsg: err.message || "Something went wrong",
-      status: err.statusCode || 500,
+      status: statusCode,
       ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
   });
