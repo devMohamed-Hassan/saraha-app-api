@@ -1,5 +1,6 @@
 import { Schema, get, model, set } from "mongoose";
 import { decrypt, encrypt } from "../../utils/crypto.js";
+import { hash } from "../../utils/hash.js";
 
 export const Roles = {
   admin: "admin",
@@ -33,6 +34,7 @@ const schema = new Schema(
       type: String,
       required: true,
       minlength: 8,
+      set: (value) => hash(value),
     },
     age: {
       type: Number,

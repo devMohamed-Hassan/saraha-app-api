@@ -4,7 +4,7 @@ import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
-import { encrypt } from "../../utils/crypto.js";
+import { compare } from "../../utils/hash.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 const SALT_ROUNDS = 10;
@@ -34,12 +34,10 @@ export const signUp = async (req, res, next) => {
     throw new Error("This email is already registered", { cause: 400 });
   }
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
   const user = await create(userModel, {
     name,
     email,
-    password: hashedPassword,
+    password,
     role,
     gender,
     age,
@@ -70,13 +68,14 @@ export const login = async (req, res, next) => {
   const user = await findOne(userModel, { email });
 
   if (!user) {
-    const fakeHash = "$2b$10$abcdefghijklmnopqrstuvCDEFGHIJKLMNO123456";
-    await bcrypt.compare(password, fakeHash);
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = compare(password, user.password);
+
   if (!isMatch) {
+    console.log(password);
+    console.log(user.password);
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
