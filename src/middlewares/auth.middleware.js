@@ -10,34 +10,41 @@ Object.freeze(types);
 
 export const decodeToken = async ({
   tokenType = types.access,
-  token,
+  authorization = "",
   next,
 }) => {
-  try {
-    let secret = "";
-    if (tokenType === types.access) {
-      secret = process.env.ACCESS_TOKEN_SECRET;
-    } else if (tokenType === types.refresh) {
-      secret = process.env.REFRESH_TOKEN_SECRET;
-    } else {
-      return next(new Error("Invalid token type", { cause: 400 }));
-    }
-    const payload = jwt.verify(token, secret);
-    const user = await findById(userModel, payload._id);
-    if (!user) {
-      return next(new Error("User Not Found", { cause: 404 }));
-    }
-    return payload;
-  } catch (error) {
-    return next(new Error(error.message, { cause: 400 }));
+  if (!authorization) {
+    return next(new Error("Token is required", { cause: 401 }));
   }
+
+  const [key, token] = authorization.split(" ");
+
+  if (
+    !authorization.startsWith(process.env.BearerToken) ||
+    key !== process.env.BearerToken
+  ) {
+    return next(new Error("invaild bearer key"));
+  }
+
+  const secret =
+    tokenType === types.access
+      ? process.env.ACCESS_TOKEN_SECRET
+      : process.env.REFRESH_TOKEN_SECRET;
+
+  const payload = jwt.verify(token, secret);
+
+  const user = await findById(userModel, payload._id);
+  if (!user) {
+    return next(new Error("User Not Found", { cause: 404 }));
+  }
+  return payload;
 };
 
 export const auth = (req, res, next) => {
   return async (req, res, next) => {
     const { authorization } = req.headers;
     const user = await decodeToken({
-      token: authorization,
+      authorization,
       next,
     });
     req.user = user;

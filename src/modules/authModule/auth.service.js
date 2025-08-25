@@ -114,7 +114,7 @@ export const refreshToken = async (req, res, next) => {
   const { authorization } = req.headers;
   const user = await decodeToken({
     tokenType: types.refresh,
-    token: authorization,
+    authorization,
     next,
   });
   const accessToken = jwt.sign(
