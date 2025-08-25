@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import userModel from "../../config/models/user.model.js";
+import userModel, { Roles } from "../../config/models/user.model.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, findById, findOne } from "../../services/db.service.js";
@@ -74,20 +74,29 @@ export const login = async (req, res, next) => {
   const isMatch = compare(password, user.password);
 
   if (!isMatch) {
-    console.log(password);
-    console.log(user.password);
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
   const payload = {
     _id: user._id,
     email: user.email,
+    role: user.role,
   };
 
-  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: `1 H`,
+  const accessSignture =
+    user.role === Roles.admin
+      ? process.env.ADMIN_ACCESS_TOKEN_SECRET
+      : process.env.USER_ACCESS_TOKEN_SECRET;
+
+  const refreshSignture =
+    user.role === Roles.admin
+      ? process.env.ADMIN_REFRESH_TOKEN_SECRET
+      : process.env.USER_REFRESH_TOKEN_SECRET;
+
+  const accessToken = jwt.sign(payload, accessSignture, {
+    expiresIn: `1h`,
   });
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
+  const refreshToken = jwt.sign(payload, refreshSignture, {
     expiresIn: `7d`,
   });
 
@@ -114,14 +123,21 @@ export const refreshToken = async (req, res, next) => {
     authorization,
     next,
   });
+
+  const accessSignture =
+    user.role === Roles.admin
+      ? process.env.ADMIN_ACCESS_TOKEN_SECRET
+      : process.env.USER_ACCESS_TOKEN_SECRET;
+
   const accessToken = jwt.sign(
     {
       _id: user._id,
       email: user.email,
+      role: user.role,
     },
-    process.env.ACCESS_TOKEN_SECRET,
+    accessSignture,
     {
-      expiresIn: `1 H`,
+      expiresIn: `1h`,
     }
   );
   handleSuccess({ res, statusCode: 202, data: { accessToken } });

@@ -5,7 +5,6 @@ import { Roles } from "../../config/models/user.model.js";
 
 const router = Router();
 
-router.get("/", auth(), allowTo(Roles.admin), getUserProfile);
-
+router.get("/", auth(), allowTo(Roles.user), getUserProfile);
 
 export default router;

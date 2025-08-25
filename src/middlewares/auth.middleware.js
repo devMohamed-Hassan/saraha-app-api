@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { findById } from "../services/db.service.js";
-import userModel from "../config/models/user.model.js";
+import userModel, { Roles } from "../config/models/user.model.js";
 
 export const types = {
   access: "access",
@@ -26,10 +26,24 @@ export const decodeToken = async ({
     return next(new Error("invaild bearer key"));
   }
 
-  const secret =
-    tokenType === types.access
-      ? process.env.ACCESS_TOKEN_SECRET
-      : process.env.REFRESH_TOKEN_SECRET;
+  const decoded = jwt.decode(token);
+
+  if (!decoded || !decoded.role) {
+    return next(new Error("Invalid token", { cause: 401 }));
+  }
+
+  decoded.role;
+  const accessSignture =
+    decoded.role === Roles.admin
+      ? process.env.ADMIN_ACCESS_TOKEN_SECRET
+      : process.env.USER_ACCESS_TOKEN_SECRET;
+
+  const refreshSignture =
+    decoded.role === Roles.admin
+      ? process.env.ADMIN_REFRESH_TOKEN_SECRET
+      : process.env.USER_REFRESH_TOKEN_SECRET;
+
+  const secret = tokenType === types.access ? accessSignture : refreshSignture;
 
   const payload = jwt.verify(token, secret);
 
