@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+import { Schema, get, model, set } from "mongoose";
+import { decrypt, encrypt } from "../../utils/crypto.js";
 
 export const Roles = {
   admin: "admin",
@@ -50,11 +51,33 @@ const schema = new Schema(
     phone: {
       type: String,
       required: true,
+      get: (value) => decrypt(value),
+      set: (value) => encrypt(value),
     },
   },
 
   {
     timestamps: true,
+    toJSON: {
+      getters: true,
+      transform: function (doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        delete ret.password;
+        return ret;
+      },
+    },
+    toObject: {
+      getters: true,
+      transform: function (doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        delete ret.password;
+        return ret;
+      },
+    },
   }
 );
 

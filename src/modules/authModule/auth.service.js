@@ -15,7 +15,6 @@ export const signUp = async (req, res, next) => {
   if (!name || !email || !password || !phone || !age || !gender) {
     throw new Error("All fields are required", { cause: 400 });
   }
-
   email = email.trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -44,16 +43,14 @@ export const signUp = async (req, res, next) => {
     role,
     gender,
     age,
-    phone: encrypt(phone),
+    phone,
   });
 
-  const userObj = user.toObject();
-  delete userObj.password;
   handleSuccess({
     res,
     statusCode: 201,
     message: "Signup successful",
-    data: userObj,
+    data: user,
   });
 };
 
