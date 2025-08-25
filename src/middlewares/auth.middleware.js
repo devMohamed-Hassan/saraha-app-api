@@ -51,3 +51,15 @@ export const auth = (req, res, next) => {
     next();
   };
 };
+
+export const allowTo = (...roles) => {
+  return async (req, res, next) => {
+    const user = req.user;
+    if (!roles.includes(user.role)) {
+      return next(
+        new Error("You are not allowed to access this endpoint", { cause: 403 })
+      );
+    }
+    next();
+  };
+};
