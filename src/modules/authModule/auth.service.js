@@ -4,6 +4,7 @@ import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
+import { encrypt } from "../../utils/crypto.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 const SALT_ROUNDS = 10;
@@ -43,7 +44,7 @@ export const signUp = async (req, res, next) => {
     role,
     gender,
     age,
-    phone,
+    phone: encrypt(phone),
   });
 
   const userObj = user.toObject();
@@ -88,7 +89,7 @@ export const login = async (req, res, next) => {
   };
 
   const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: `20000ms`,
+    expiresIn: `1 H`,
   });
   const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: `7d`,
@@ -124,7 +125,7 @@ export const refreshToken = async (req, res, next) => {
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: `20s`,
+      expiresIn: `1 H`,
     }
   );
   handleSuccess({ res, statusCode: 202, data: { accessToken } });

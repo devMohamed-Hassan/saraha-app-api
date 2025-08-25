@@ -20,8 +20,8 @@ export const decodeToken = async ({
   const [key, token] = authorization.split(" ");
 
   if (
-    !authorization.startsWith(process.env.BearerToken) ||
-    key !== process.env.BearerToken
+    !authorization.startsWith(process.env.BEARER_TOKEN) ||
+    key !== process.env.BEARER_TOKEN
   ) {
     return next(new Error("invaild bearer key"));
   }
@@ -37,7 +37,7 @@ export const decodeToken = async ({
   if (!user) {
     return next(new Error("User Not Found", { cause: 404 }));
   }
-  return payload;
+  return user;
 };
 
 export const auth = (req, res, next) => {
