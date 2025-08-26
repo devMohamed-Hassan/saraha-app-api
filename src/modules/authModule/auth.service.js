@@ -164,3 +164,46 @@ export const refreshToken = async (req, res, next) => {
   );
   handleSuccess({ res, statusCode: 202, data: { accessToken } });
 };
+
+export const confirmEmail = async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return next(new Error("Email and OTP are required", 400));
+  }
+
+  const user = await findOne(userModel, { email });
+
+  if (!user) {
+    return next(new Error("User not found", { cause: 404 }));
+  }
+
+  if (user.isVerified) {
+    return next(new Error("User already verified", 400));
+  }
+
+  const isMatch = compare(otp, user.otp);
+
+  if (!isMatch) {
+    return next(new Error("in-valid otp", { cause: 400 }));
+  }
+
+  await userModel.updateOne(
+    { _id: user._id },
+    {
+      isVerified: true,
+      $unset: {
+        otp: "",
+      },
+    }
+  );
+  handleSuccess({
+    res,
+    statusCode: 202,
+    message: "Email verified successfully",
+    data: {
+      id: user._id,
+      email: user.email,
+    },
+  });
+};
