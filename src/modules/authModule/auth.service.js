@@ -106,11 +106,15 @@ export const login = async (req, res, next) => {
     message: "Login successful",
     data: {
       user: {
+        id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+      },
+      tokens: {
         accessToken,
         refreshToken,
+        expiresIn: 3600,
       },
     },
   });
