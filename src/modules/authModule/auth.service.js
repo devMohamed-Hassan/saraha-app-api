@@ -1,13 +1,14 @@
-import bcrypt from "bcrypt";
 import userModel, { Roles } from "../../config/models/user.model.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
+import otpGenerator from "otp-generator";
+import { emailTemplate } from "../../utils/sendEmail/emailTemplate.js";
+import { sendEmail } from "../../utils/sendEmail/sendEmail.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
-const SALT_ROUNDS = 10;
 
 export const signUp = async (req, res, next) => {
   let { name, email, password, role, gender, phone, age } = req.body;
@@ -34,6 +35,12 @@ export const signUp = async (req, res, next) => {
     throw new Error("This email is already registered", { cause: 400 });
   }
 
+  const otp = otpGenerator.generate(6, {
+    upperCaseAlphabets: false,
+    specialChars: false,
+    lowerCaseAlphabets: false,
+  });
+
   const user = await create(userModel, {
     name,
     email,
@@ -42,13 +49,24 @@ export const signUp = async (req, res, next) => {
     gender,
     age,
     phone,
+    otp,
+  });
+
+  const html = emailTemplate(otp, user.name, "Please confirm your email");
+  await sendEmail({
+    to: user.email,
+    html,
+    subject: "Please confirm your email",
   });
 
   handleSuccess({
     res,
     statusCode: 201,
-    message: "Signup successful",
-    data: user,
+    message: "Signup successful. Please check your email for OTP.",
+    data: {
+      id: user._id,
+      email: user.email,
+    },
   });
 };
 

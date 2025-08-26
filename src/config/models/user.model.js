@@ -56,6 +56,14 @@ const schema = new Schema(
       get: (value) => decrypt(value),
       set: (value) => encrypt(value),
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      set: (value) => hash(value),
+    },
   },
 
   {
