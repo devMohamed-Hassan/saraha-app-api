@@ -93,6 +93,14 @@ export const login = async (req, res, next) => {
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
+  if (!user.isVerified) {
+    return next(
+      new Error("Please verify your email before logging in.", {
+        cause: 403,
+      })
+    );
+  }
+
   const payload = {
     _id: user._id,
     email: user.email,
