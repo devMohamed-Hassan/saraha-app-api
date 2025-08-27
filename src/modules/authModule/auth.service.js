@@ -5,8 +5,7 @@ import { create, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
 import otpGenerator from "otp-generator";
-import { emailTemplate } from "../../utils/sendEmail/emailTemplate.js";
-import { sendEmail } from "../../utils/sendEmail/sendEmail.js";
+import emailEmitter from "../../utils/sendEmail/emailEvent.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
@@ -52,11 +51,10 @@ export const signUp = async (req, res, next) => {
     otp,
   });
 
-  const html = emailTemplate(otp, user.name, "Please confirm your email");
-  await sendEmail({
-    to: user.email,
-    html,
-    subject: "Please confirm your email",
+  emailEmitter.emit("confirmEmail", {
+    email: user.email,
+    otp,
+    userName: user.name,
   });
 
   handleSuccess({
