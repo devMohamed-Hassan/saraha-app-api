@@ -33,8 +33,9 @@ const bootstrap = async (app, express) => {
       statusCode = 401;
     }
     res.status(statusCode).json({
-      errMsg: err.message || "Something went wrong",
+      success: false,
       status: statusCode,
+      errMsg: err.message || "Something went wrong",
       ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
   });

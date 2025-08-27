@@ -62,18 +62,19 @@ const schema = new Schema(
     },
     emailOtp: {
       type: String,
-      set: (value) => hash(value),
+      set: (value) => (value ? hash(value) : undefined),
     },
     passwordOtp: {
       type: String,
-      set: (value) => hash(value),
+      set: (value) => (value ? hash(value) : undefined),
+      required: false,
     },
     passwordOtpExpiry: {
       type: Date,
+      required: false,
     },
     isOtpVerifiedForPassword: {
       type: Boolean,
-      default: false,
     },
   },
 

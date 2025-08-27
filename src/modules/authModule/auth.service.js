@@ -10,23 +10,41 @@ import { generateOtp } from "../../utils/sendEmail/generateOtp.js";
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
 export const signUp = async (req, res, next) => {
-  let { name, email, password, role, gender, phone, age } = req.body;
+  let { name, email, password, confirmPassword, role, gender, phone, age } =
+    req.body;
 
-  if (!name || !email || !password || !phone || !age || !gender) {
-    throw new Error("All fields are required", { cause: 400 });
-  }
-  email = email.trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new Error("Invalid email format", { cause: 400 });
-  }
-
-  if (password.length < 6) {
-    throw new Error("Password must be at least 6 characters", { cause: 400 });
+  if (
+    !name ||
+    !email ||
+    !password ||
+    !phone ||
+    !age ||
+    !gender ||
+    !confirmPassword
+  ) {
+    return next(new Error("All fields are required", { cause: 400 }));
   }
 
   if (name.length < 2) {
-    throw new Error("Name must be at least 2 characters", { cause: 400 });
+    return next(
+      new Error("Name must be at least 2 characters", { cause: 400 })
+    );
+  }
+
+  email = email.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return next(new Error("Invalid email format", { cause: 400 }));
+  }
+
+  if (password.length < 6) {
+    return next(
+      new Error("Password must be at least 6 characters", { cause: 400 })
+    );
+  }
+
+  if (password !== confirmPassword) {
+    return next(new Error("Passwords do not match", { cause: 400 }));
   }
 
   const isExist = await findOne(userModel, { email });
@@ -58,8 +76,10 @@ export const signUp = async (req, res, next) => {
     statusCode: 201,
     message: "Signup successful. Please check your email for OTP.",
     data: {
-      id: user._id,
-      email: user.email,
+      user: {
+        id: user._id,
+        email: user.email,
+      },
     },
   });
 };
@@ -204,8 +224,10 @@ export const confirmEmail = async (req, res, next) => {
     statusCode: 202,
     message: "Email verified successfully",
     data: {
-      id: user._id,
-      email: user.email,
+      user: {
+        id: user._id,
+        email: user.email,
+      },
     },
   });
 };
@@ -247,6 +269,10 @@ export const forgotPassword = async (req, res, next) => {
     res,
     statusCode: 202,
     message: "Password reset OTP has been sent to your email",
+    data: {
+      expiry: user.passwordOtpExpiry,
+      expiresIn: 10 * 60,
+    },
   });
 };
 
@@ -259,6 +285,16 @@ export const verifyForgotOtp = async (req, res, next) => {
 
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
+  if (!user) {
+    return next(new Error("No account found with this email", { cause: 404 }));
+  }
+
+  if (!user.passwordOtp || !user.passwordOtpExpiry) {
+    return next(
+      new Error("No OTP request found. Please request again.", { cause: 400 })
+    );
+  }
+
   if (!user.passwordOtpExpiry || user.passwordOtpExpiry < Date.now()) {
     return next(new Error("OTP expired", { cause: 400 }));
   }
@@ -270,11 +306,60 @@ export const verifyForgotOtp = async (req, res, next) => {
   }
 
   user.isOtpVerifiedForPassword = true;
+  user.passwordOtp = undefined;
   await user.save();
 
   handleSuccess({
     res,
     statusCode: 200,
     message: "OTP verified. You can reset your password now.",
+  });
+};
+
+export const resetPassword = async (req, res, next) => {
+  const { email, newPassword, confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    return next(
+      new Error("Email, new password and confirm password are required", {
+        cause: 400,
+      })
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    return next(new Error("Passwords do not match", { cause: 400 }));
+  }
+
+  const user = await userModel.findOne({ email: email.trim().toLowerCase() });
+  if (!user)
+    return next(new Error("No account found with this email", { cause: 404 }));
+
+  if (!user.isVerified)
+    return next(new Error("Email not verified", { cause: 403 }));
+
+  if (!user.isOtpVerifiedForPassword) {
+    return next(
+      new Error("OTP not verified. Cannot reset password.", { cause: 403 })
+    );
+  }
+
+  if (!user.passwordOtpExpiry || user.passwordOtpExpiry < Date.now()) {
+    return next(
+      new Error("OTP has expired. Please request a new one.", { cause: 410 })
+    );
+  }
+
+  user.password = newPassword;
+  user.isOtpVerifiedForPassword = undefined;
+  user.passwordOtp = undefined;
+  user.passwordOtpExpiry = undefined;
+
+  await user.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Password has been reset successfully.",
   });
 };

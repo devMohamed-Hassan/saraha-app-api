@@ -12,5 +12,6 @@ router.post("/confirm-email", authServices.confirmEmail);
 
 router.post("/forgot-password", authServices.forgotPassword);
 router.post("/verify-reset-code", authServices.verifyForgotOtp);
+router.post("/reset-password", authServices.resetPassword);
 
 export default router;

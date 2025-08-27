@@ -2,11 +2,12 @@ export const handleSuccess = ({
   res,
   statusCode = 200,
   message = "Success",
-  data = {},
+  data = null,
 }) => {
   return res.status(statusCode).json({
-    msg: message,
+    success: true,
     status: statusCode,
-    data,
+    message,
+    ...(data !== null && { data }),
   });
 };
