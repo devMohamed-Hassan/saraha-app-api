@@ -351,6 +351,7 @@ export const resetPassword = async (req, res, next) => {
   }
 
   user.password = newPassword;
+  user.credentialChangedAt = Date.now();
   user.isOtpVerifiedForPassword = undefined;
   user.passwordOtp = undefined;
   user.passwordOtpExpiry = undefined;

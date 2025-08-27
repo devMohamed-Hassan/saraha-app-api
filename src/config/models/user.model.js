@@ -76,6 +76,9 @@ const schema = new Schema(
     isOtpVerifiedForPassword: {
       type: Boolean,
     },
+    credentialChangedAt: {
+      type: Date,
+    },
   },
 
   {

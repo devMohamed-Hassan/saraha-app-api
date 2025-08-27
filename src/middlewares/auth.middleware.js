@@ -51,7 +51,6 @@ export const decodeToken = async ({
   if (!user) {
     return next(new Error("User Not Found", { cause: 404 }));
   }
-
   if (!user.isVerified) {
     return next(
       new Error("Please verify your email before logging in.", {
@@ -59,7 +58,13 @@ export const decodeToken = async ({
       })
     );
   }
-  
+  if (
+    user.credentialChangedAt &&
+    payload.iat * 1000 < user.credentialChangedAt.getTime()
+  ) {
+    return next(new Error("Token is no longer valid. Please login again."));
+  }
+
   return user;
 };
 
