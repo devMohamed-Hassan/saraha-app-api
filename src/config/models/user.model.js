@@ -68,6 +68,13 @@ const schema = new Schema(
       type: String,
       set: (value) => hash(value),
     },
+    passwordOtpExpiry: {
+      type: Date,
+    },
+    isOtpVerifiedForPassword: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   {

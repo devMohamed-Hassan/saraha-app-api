@@ -187,7 +187,7 @@ export const confirmEmail = async (req, res, next) => {
   const isMatch = compare(otp, user.emailOtp);
 
   if (!isMatch) {
-    return next(new Error("in-valid otp", { cause: 400 }));
+    return next(new Error("Invalid OTP", { cause: 400 }));
   }
 
   await userModel.updateOne(
@@ -233,6 +233,8 @@ export const forgotPassword = async (req, res, next) => {
 
   const otp = generateOtp();
   user.passwordOtp = otp;
+  user.passwordOtpExpiry = Date.now() + 10 * 60 * 1000;
+  user.isOtpVerifiedForPassword = false;
   await user.save();
 
   emailEmitter.emit("forgotPassword", {
@@ -245,5 +247,34 @@ export const forgotPassword = async (req, res, next) => {
     res,
     statusCode: 202,
     message: "Password reset OTP has been sent to your email",
+  });
+};
+
+export const verifyForgotOtp = async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return next(new Error("Email and OTP are required", { cause: 400 }));
+  }
+
+  const user = await findOne(userModel, { email: email.trim().toLowerCase() });
+
+  if (!user.passwordOtpExpiry || user.passwordOtpExpiry < Date.now()) {
+    return next(new Error("OTP expired", { cause: 400 }));
+  }
+
+  const isMatch = compare(otp, user.passwordOtp);
+
+  if (!isMatch) {
+    return next(new Error("Invalid OTP", { cause: 400 }));
+  }
+
+  user.isOtpVerifiedForPassword = true;
+  await user.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "OTP verified. You can reset your password now.",
   });
 };

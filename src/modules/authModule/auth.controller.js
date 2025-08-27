@@ -5,8 +5,12 @@ const router = Router();
 
 router.post("/signup", authServices.signUp);
 router.post("/login", authServices.login);
+
 router.post("/refersh-token", authServices.refreshToken);
+
 router.post("/confirm-email", authServices.confirmEmail);
+
 router.post("/forgot-password", authServices.forgotPassword);
+router.post("/verify-reset-code", authServices.verifyForgotOtp);
 
 export default router;
