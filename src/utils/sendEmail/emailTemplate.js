@@ -1,82 +1,163 @@
 export const emailTemplate = (code, name, subject) => `<!DOCTYPE html>
 <html>
-<head>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${subject}</title>
+  </head>
+  <body
+    style="
       margin: 0;
       padding: 0;
-      background-color: #f4f4f4;
-    }
-    .email-container {
-      max-width: 600px;
-      margin: 20px auto;
-      background-color: #ffffff;
-      border: 1px solid #dddddd;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .email-header {
-      background-color: #007BFF;
-      color: #ffffff;
-      text-align: center;
-      padding: 20px;
-    }
-    .email-header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    .email-body {
-      padding: 20px;
-      color: #333333;
-      line-height: 1.6;
-    }
-    .email-body h2 {
-      margin-top: 0;
-      color: #007BFF;
-    }
-    .activation-button {
-      display: inline-block;
-      background-color: #007BFF;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 16px;
-      margin: 20px 0;
-    }
-    .activation-button:hover {
-      background-color: #0056b3;
-    }
-    .email-footer {
-      text-align: center;
-      padding: 15px;
-      background-color: #f4f4f4;
-      font-size: 14px;
-      color: #777777;
-    }
-    .email-footer a {
-      color: #007BFF;
-      text-decoration: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="email-container">
-    <div class="email-header">
-      <h1>${subject}</h1>
-    </div>
-    <div class="email-body">
-      <h2>Hello ${name},</h2>
-      <p>Thank you for signing up with Route Academy. To complete your registration and start using your account, please get code to ${subject}</p>
-      <h2 class="activation-button">${code}</h2>
-      <p>If you did not sign up for this account, please ignore this email.</p>
-      <p>Best regards,<br>Social Media Team</p>
-    </div>
-    <div class="email-footer">
-      <p>&copy; 2024 Route Academy. All rights reserved.</p>
-      <p><a href="[SupportLink]">Contact Support</a> | <a href="[UnsubscribeLink]">Unsubscribe</a></p>
-    </div>
-  </div>
-</body>
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      width="100%"
+    >
+      <tr>
+        <td align="center" style="padding: 30px 15px">
+          <table
+            role="presentation"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+            width="600"
+            style="
+              max-width: 600px;
+              background: #ffffff;
+              border: 1px solid #e6e6e6;
+              border-radius: 12px;
+              box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+              overflow: hidden;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                align="center"
+                style="
+                  background: linear-gradient(135deg, #008080, #20c997);
+                  padding: 28px 20px;
+                "
+              >
+                <h1
+                  style="
+                    margin: 0;
+                    font-size: 24px;
+                    color: #ffffff;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                  "
+                >
+                  ${subject}
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 30px; color: #333333; line-height: 1.7">
+                <h2
+                  style="
+                    margin-top: 0;
+                    color: #008080;
+                    font-size: 20px;
+                    font-weight: 600;
+                  "
+                >
+                  Hi ${name},
+                </h2>
+                <p style="margin: 0 0 18px; font-size: 15px; color: #555555">
+                  Welcome to <strong>Saraha</strong> We’re excited to have you
+                  on board! To complete your registration, please use the secure
+                  verification code below:
+                </p>
+
+                <!-- Code Box -->
+                <table
+                  role="presentation"
+                  cellspacing="0"
+                  cellpadding="0"
+                  border="0"
+                  align="center"
+                  style="margin: 28px auto"
+                >
+                  <tr>
+                    <td
+                      style="
+                        background: #008080;
+                        color: #ffffff;
+                        padding: 16px 50px;
+                        border-radius: 10px;
+                        font-size: 24px;
+                        font-weight: bold;
+                        text-align: center;
+                        letter-spacing: 4px;
+                        box-shadow: 0 3px 8px rgba(0, 128, 128, 0.25);
+                      "
+                    >
+                      ${code}
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin: 18px 0 0; font-size: 14px; color: #666666">
+                  This code is valid for the next <strong>10 minutes</strong>.
+                  Please do not share it with anyone.
+                </p>
+                <p style="margin: 25px 0 0; font-size: 14px; color: #555555">
+                  If you didn’t request this account, simply ignore this email —
+                  no action is needed.
+                </p>
+
+                <p
+                  style="
+                    margin: 28px 0 0;
+                    font-size: 14px;
+                    color: #555555;
+                    font-weight: 500;
+                  "
+                >
+                  Best regards, <br />
+                  <span>Developer, Mohamed Hassan</span>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                align="center"
+                style="
+                  background: #f9fafc;
+                  padding: 22px;
+                  font-size: 13px;
+                  color: #888888;
+                  border-top: 1px solid #e4eaf0;
+                "
+              >
+                <p style="margin: 0">
+                  &copy; 2025 <strong>Saraha</strong>. All rights reserved.
+                </p>
+                <p style="margin: 6px 0 0">
+                  <a href="#" style="color: #008080; text-decoration: none"
+                    >Privacy Policy</a
+                  >
+                  ·
+                  <a href="#" style="color: #008080; text-decoration: none"
+                    >Help Center</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>`;
