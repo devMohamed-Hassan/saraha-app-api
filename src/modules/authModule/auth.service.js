@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import { create, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
-import otpGenerator from "otp-generator";
 import emailEmitter from "../../utils/sendEmail/emailEvent.js";
+import { generateOtp } from "../../utils/sendEmail/generateOtp.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
@@ -34,11 +34,7 @@ export const signUp = async (req, res, next) => {
     throw new Error("This email is already registered", { cause: 400 });
   }
 
-  const otp = otpGenerator.generate(6, {
-    upperCaseAlphabets: false,
-    specialChars: false,
-    lowerCaseAlphabets: false,
-  });
+  const otp = generateOtp();
 
   const user = await create(userModel, {
     name,
