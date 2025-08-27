@@ -1,4 +1,10 @@
-export const emailTemplate = (code, name, subject) => `<!DOCTYPE html>
+export const emailTemplate = ({
+  code,
+  name,
+  subject,
+  message,
+  expiryMinutes = 10,
+}) => `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -12,13 +18,7 @@ export const emailTemplate = (code, name, subject) => `<!DOCTYPE html>
       font-family: 'Segoe UI', Roboto, Arial, sans-serif;
     "
   >
-    <table
-      role="presentation"
-      cellspacing="0"
-      cellpadding="0"
-      border="0"
-      width="100%"
-    >
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td align="center" style="padding: 30px 15px">
           <table
@@ -73,20 +73,11 @@ export const emailTemplate = (code, name, subject) => `<!DOCTYPE html>
                   Hi ${name},
                 </h2>
                 <p style="margin: 0 0 18px; font-size: 15px; color: #555555">
-                  Welcome to <strong>Saraha</strong> We’re excited to have you
-                  on board! To complete your registration, please use the secure
-                  verification code below:
+                  ${message}
                 </p>
 
                 <!-- Code Box -->
-                <table
-                  role="presentation"
-                  cellspacing="0"
-                  cellpadding="0"
-                  border="0"
-                  align="center"
-                  style="margin: 28px auto"
-                >
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 28px auto">
                   <tr>
                     <td
                       style="
@@ -107,12 +98,12 @@ export const emailTemplate = (code, name, subject) => `<!DOCTYPE html>
                 </table>
 
                 <p style="margin: 18px 0 0; font-size: 14px; color: #666666">
-                  This code is valid for the next <strong>10 minutes</strong>.
+                  This code is valid for the next <strong>${expiryMinutes} minutes</strong>.
                   Please do not share it with anyone.
                 </p>
+
                 <p style="margin: 25px 0 0; font-size: 14px; color: #555555">
-                  If you didn’t request this account, simply ignore this email —
-                  no action is needed.
+                  If you didn’t request this, you can safely ignore this email.
                 </p>
 
                 <p

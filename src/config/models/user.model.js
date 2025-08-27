@@ -60,7 +60,11 @@ const schema = new Schema(
       type: Boolean,
       default: false,
     },
-    otp: {
+    emailOtp: {
+      type: String,
+      set: (value) => hash(value),
+    },
+    passwordOtp: {
       type: String,
       set: (value) => hash(value),
     },

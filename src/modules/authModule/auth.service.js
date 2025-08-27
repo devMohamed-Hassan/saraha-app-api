@@ -1,7 +1,7 @@
 import userModel, { Roles } from "../../config/models/user.model.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
-import { create, findById, findOne } from "../../services/db.service.js";
+import { create, find, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
 import emailEmitter from "../../utils/sendEmail/emailEvent.js";
@@ -44,7 +44,7 @@ export const signUp = async (req, res, next) => {
     gender,
     age,
     phone,
-    otp,
+    emailOtp: otp,
   });
 
   emailEmitter.emit("confirmEmail", {
@@ -184,7 +184,7 @@ export const confirmEmail = async (req, res, next) => {
     return next(new Error("User already verified", 400));
   }
 
-  const isMatch = compare(otp, user.otp);
+  const isMatch = compare(otp, user.emailOtp);
 
   if (!isMatch) {
     return next(new Error("in-valid otp", { cause: 400 }));
@@ -195,7 +195,7 @@ export const confirmEmail = async (req, res, next) => {
     {
       isVerified: true,
       $unset: {
-        otp: "",
+        emailOtp: "",
       },
     }
   );
@@ -207,5 +207,43 @@ export const confirmEmail = async (req, res, next) => {
       id: user._id,
       email: user.email,
     },
+  });
+};
+
+export const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new Error("Email is required", { cause: 400 }));
+  }
+
+  const user = await findOne(userModel, { email: email.trim().toLowerCase() });
+
+  if (!user) {
+    return next(new Error("No account found with this email", { cause: 404 }));
+  }
+
+  if (!user.isVerified) {
+    return next(
+      new Error("Please verify your email before logging in.", {
+        cause: 403,
+      })
+    );
+  }
+
+  const otp = generateOtp();
+  user.passwordOtp = otp;
+  await user.save();
+
+  emailEmitter.emit("forgotPassword", {
+    email: user.email,
+    userName: user.name,
+    otp,
+  });
+
+  handleSuccess({
+    res,
+    statusCode: 202,
+    message: "Password reset OTP has been sent to your email",
   });
 };
