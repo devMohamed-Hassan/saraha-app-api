@@ -193,6 +193,50 @@ export const refreshToken = async (req, res, next) => {
   handleSuccess({ res, statusCode: 202, data: { accessToken } });
 };
 
+export const resendCode = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new Error("Email is required", { cause: 400 }));
+  }
+
+  const user = await findOne(userModel, { email: email.trim().toLowerCase() });
+
+  if (!user) {
+    return next(new Error("No account found with this email", { cause: 404 }));
+  }
+
+  if (user.isVerified) {
+    return next(new Error("User already verified", 400));
+  }
+
+  const otp = generateOtp();
+
+  user.emailOtp = {
+    code: otp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    verified: false,
+    attempts: 0,
+    maxAttempts: 5,
+  };
+
+  await user.save();
+
+  emailEmitter.emit("confirmEmail", {
+    email: user.email,
+    otp,
+    userName: user.name,
+  });
+
+  return handleSuccess({
+    res,
+    statusCode: 200,
+    message: "OTP resent successfully. Please check your email.",
+    data: { expiresAt: user.emailOtp.expiresAt },
+  });
+  
+};
+
 export const confirmEmail = async (req, res, next) => {
   const { email, otp } = req.body;
 
