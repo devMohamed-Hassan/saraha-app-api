@@ -62,7 +62,13 @@ export const signUp = async (req, res, next) => {
     gender,
     age,
     phone,
-    emailOtp: otp,
+    emailOtp: {
+      code: otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      verified: false,
+      attempts: 0,
+      maxAttempts: 5,
+    },
   });
 
   emailEmitter.emit("confirmEmail", {
@@ -204,21 +210,31 @@ export const confirmEmail = async (req, res, next) => {
     return next(new Error("User already verified", 400));
   }
 
-  const isMatch = compare(otp, user.emailOtp);
+  if (!user.emailOtp || !user.emailOtp.code) {
+    return next(
+      new Error("No OTP found, please request a new one", { cause: 400 })
+    );
+  }
 
+  if (new Date() > user.emailOtp.expiresAt) {
+    return next(new Error("OTP has expired", { cause: 400 }));
+  }
+
+  if (user.emailOtp.attempts >= user.emailOtp.maxAttempts) {
+    return next(new Error("Max OTP attempts reached", { cause: 400 }));
+  }
+
+  const isMatch = compare(otp, user.emailOtp.code);
   if (!isMatch) {
+    user.emailOtp.attempts += 1;
+    await user.save();
     return next(new Error("Invalid OTP", { cause: 400 }));
   }
 
-  await userModel.updateOne(
-    { _id: user._id },
-    {
-      isVerified: true,
-      $unset: {
-        emailOtp: "",
-      },
-    }
-  );
+  user.isVerified = true;
+  user.emailOtp = undefined;
+  await user.save();
+
   handleSuccess({
     res,
     statusCode: 202,
@@ -247,16 +263,22 @@ export const forgotPassword = async (req, res, next) => {
 
   if (!user.isVerified) {
     return next(
-      new Error("Please verify your email before logging in.", {
+      new Error("Please verify your email first", {
         cause: 403,
       })
     );
   }
 
   const otp = generateOtp();
-  user.passwordOtp = otp;
-  user.passwordOtpExpiry = Date.now() + 10 * 60 * 1000;
-  user.isOtpVerifiedForPassword = false;
+
+  user.passwordOtp = {
+    code: otp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    verified: false,
+    attempts: 0,
+    maxAttempts: 5,
+  };
+
   await user.save();
 
   emailEmitter.emit("forgotPassword", {
@@ -270,7 +292,7 @@ export const forgotPassword = async (req, res, next) => {
     statusCode: 202,
     message: "Password reset OTP has been sent to your email",
     data: {
-      expiry: user.passwordOtpExpiry,
+      expiry: user.passwordOtp.expiresAt,
       expiresIn: 10 * 60,
     },
   });
@@ -289,24 +311,39 @@ export const verifyForgotOtp = async (req, res, next) => {
     return next(new Error("No account found with this email", { cause: 404 }));
   }
 
-  if (!user.passwordOtp || !user.passwordOtpExpiry) {
+  if (!user.isVerified) {
+    return next(
+      new Error("Please verify your email first", {
+        cause: 403,
+      })
+    );
+  }
+
+  if (!user.passwordOtp || !user.passwordOtp.code) {
     return next(
       new Error("No OTP request found. Please request again.", { cause: 400 })
     );
   }
 
-  if (!user.passwordOtpExpiry || user.passwordOtpExpiry < Date.now()) {
-    return next(new Error("OTP expired", { cause: 400 }));
+  if (user.passwordOtp.expiresAt < new Date()) {
+    return next(
+      new Error("OTP expired. Please request again.", { cause: 400 })
+    );
   }
 
-  const isMatch = compare(otp, user.passwordOtp);
+  if (user.passwordOtp.attempts >= user.passwordOtp.maxAttempts) {
+    return next(new Error("Maximum OTP attempts reached", { cause: 403 }));
+  }
+
+  const isMatch = compare(otp, user.passwordOtp.code);
 
   if (!isMatch) {
+    user.passwordOtp.attempts += 1;
+    await user.save();
     return next(new Error("Invalid OTP", { cause: 400 }));
   }
 
-  user.isOtpVerifiedForPassword = true;
-  user.passwordOtp = undefined;
+  user.passwordOtp.verified = true;
   await user.save();
 
   handleSuccess({
@@ -338,26 +375,23 @@ export const resetPassword = async (req, res, next) => {
   if (!user.isVerified)
     return next(new Error("Email not verified", { cause: 403 }));
 
-  if (!user.isOtpVerifiedForPassword) {
+  if (!user.passwordOtp || !user.passwordOtp.verified) {
     return next(
       new Error("OTP not verified. Cannot reset password.", { cause: 403 })
     );
   }
 
-  if (!user.passwordOtpExpiry || user.passwordOtpExpiry < Date.now()) {
+  if (user.passwordOtp.expiresAt < new Date()) {
     return next(
-      new Error("OTP has expired. Please request a new one.", { cause: 410 })
+      new Error("OTP expired. Please request again.", { cause: 410 })
     );
   }
 
   user.password = newPassword;
-  user.credentialChangedAt = Date.now();
-  user.isOtpVerifiedForPassword = undefined;
+  user.credentialChangedAt = new Date();
   user.passwordOtp = undefined;
-  user.passwordOtpExpiry = undefined;
 
   await user.save();
-
   handleSuccess({
     res,
     statusCode: 200,

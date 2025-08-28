@@ -14,6 +14,20 @@ export const Gender = {
 };
 Object.freeze(Gender);
 
+const OtpSchema = new Schema(
+  {
+    code: {
+      type: String,
+      set: (value) => (value ? hash(value) : undefined),
+    },
+    expiresAt: { type: Date },
+    verified: { type: Boolean, default: false },
+    attempts: { type: Number, default: 0 },
+    maxAttempts: { type: Number, default: 5 },
+  },
+  { _id: false }
+);
+
 const schema = new Schema(
   {
     name: {
@@ -60,22 +74,8 @@ const schema = new Schema(
       type: Boolean,
       default: false,
     },
-    emailOtp: {
-      type: String,
-      set: (value) => (value ? hash(value) : undefined),
-    },
-    passwordOtp: {
-      type: String,
-      set: (value) => (value ? hash(value) : undefined),
-      required: false,
-    },
-    passwordOtpExpiry: {
-      type: Date,
-      required: false,
-    },
-    isOtpVerifiedForPassword: {
-      type: Boolean,
-    },
+    emailOtp: OtpSchema,
+    passwordOtp: OtpSchema,
     credentialChangedAt: {
       type: Date,
     },
