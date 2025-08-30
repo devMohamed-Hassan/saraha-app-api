@@ -1,4 +1,4 @@
-import userModel, { Roles } from "../../config/models/user.model.js";
+import userModel from "../../config/models/user.model.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, find, findById, findOne } from "../../services/db.service.js";
@@ -13,7 +13,11 @@ import {
   OtpExpiredError,
   UserAlreadyVerifiedError,
 } from "../../utils/customErrors.js";
+import { OAuth2Client } from "google-auth-library";
+import { Roles } from "../../constants/roles.js";
+import { Providers } from "../../constants/providers.js";
 
+const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
 export const signUp = async (req, res, next) => {
@@ -116,6 +120,12 @@ export const login = async (req, res, next) => {
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
+  if (user.provider !== Providers.SYSTEM) {
+    return next(new Error(`Use ${user.provider} login for this account`), {
+      cause: 401,
+    });
+  }
+
   const isMatch = compare(password, user.password);
 
   if (!isMatch) {
@@ -133,12 +143,12 @@ export const login = async (req, res, next) => {
   };
 
   const accessSignture =
-    user.role === Roles.admin
+    user.role === Roles.ADMIN
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET
       : process.env.USER_ACCESS_TOKEN_SECRET;
 
   const refreshSignture =
-    user.role === Roles.admin
+    user.role === Roles.ADMIN
       ? process.env.ADMIN_REFRESH_TOKEN_SECRET
       : process.env.USER_REFRESH_TOKEN_SECRET;
 
@@ -178,7 +188,7 @@ export const refreshToken = async (req, res, next) => {
   });
 
   const accessSignture =
-    user.role === Roles.admin
+    user.role === Roles.ADMIN
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET
       : process.env.USER_ACCESS_TOKEN_SECRET;
 
@@ -472,5 +482,79 @@ export const resetPassword = async (req, res, next) => {
     res,
     statusCode: 200,
     message: "Password has been reset successfully.",
+  });
+};
+
+export const socialLogin = async (req, res, next) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return next(new Error("ID Token is required"));
+  }
+
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const { email, name, picture, sub } = ticket.getPayload();
+
+  let user = await userModel.findOne({ email });
+
+  if (user?.provider === Providers.SYSTEM) {
+    return next(new Error("Please login using system account", 401));
+  }
+
+  if (!user) {
+    user = await userModel.create({
+      email,
+      name,
+      isVerified: true,
+      role: Roles.USER,
+      provider: Providers.GOOGLE,
+      //avatar: picture,
+      //googleId: sub,
+    });
+  }
+
+  const accessToken = jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.USER_ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: `1h`,
+    }
+  );
+
+  const refreshToken = jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.USER_REFRESH_TOKEN_SECRET,
+    { expiresIn: `7d` }
+  );
+
+  handleSuccess({
+    res,
+    statusCode: 202,
+    message: "Login successful",
+    data: {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      tokens: {
+        accessToken,
+        refreshToken,
+        expiresIn: 3600,
+      },
+    },
   });
 };

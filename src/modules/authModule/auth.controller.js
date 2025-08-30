@@ -16,4 +16,6 @@ router.post("/forgot-password", authServices.forgotPassword);
 router.post("/verify-reset-code", authServices.verifyForgotOtp);
 router.put("/reset-password", authServices.resetPassword);
 
+router.post("/social-login", authServices.socialLogin);
+
 export default router;
