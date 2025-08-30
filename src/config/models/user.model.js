@@ -1,9 +1,9 @@
 import { Schema, get, model, set } from "mongoose";
 import { decrypt, encrypt } from "../../utils/crypto.js";
 import { hash } from "../../utils/hash.js";
-import { Providers } from "../../constants/providers.js";
-import { Roles } from "../../constants/roles.js";
-import { Gender } from "../../constants/gender.js";
+import { Providers } from "../../utils/constants/providers.js";
+import { Gender } from "../../utils/constants/gender.js";
+import { Roles } from "../../utils/constants/roles.js";
 
 const OtpSchema = new Schema(
   {

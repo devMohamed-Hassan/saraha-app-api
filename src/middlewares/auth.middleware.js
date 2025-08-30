@@ -2,8 +2,7 @@ import jwt from "jsonwebtoken";
 import { findById } from "../services/db.service.js";
 import userModel from "../config/models/user.model.js";
 import { EmailNotVerifiedError, UserNotFoundError } from "../utils/customErrors.js";
-import { Roles } from "../constants/roles.js";
-
+import { Roles } from "../utils/constants/roles.js";
 
 
 export const types = {

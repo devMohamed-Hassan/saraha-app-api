@@ -14,8 +14,9 @@ import {
   UserAlreadyVerifiedError,
 } from "../../utils/customErrors.js";
 import { OAuth2Client } from "google-auth-library";
-import { Roles } from "../../constants/roles.js";
-import { Providers } from "../../constants/providers.js";
+import { Providers } from "../../utils/constants/providers.js";
+import { Roles } from "../../utils/constants/roles.js";
+
 
 const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";

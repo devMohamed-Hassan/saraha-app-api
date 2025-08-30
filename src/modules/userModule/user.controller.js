@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { getUserProfile } from "./user.service.js";
 import { allowTo, auth } from "../../middlewares/auth.middleware.js";
-import { Roles } from "../../constants/roles.js";
+import { Roles } from "../../utils/constants/roles.js";
 
 const router = Router();
 
