@@ -45,7 +45,9 @@ const schema = new Schema(
     },
     age: {
       type: Number,
-      required: true,
+      required: function () {
+        return this.provider === Providers.system;
+      },
     },
     role: {
       type: String,
@@ -59,7 +61,9 @@ const schema = new Schema(
     },
     phone: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === Providers.system;
+      },
       get: (value) => decrypt(value),
       set: (value) => encrypt(value),
     },
