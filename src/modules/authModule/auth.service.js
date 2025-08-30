@@ -6,6 +6,13 @@ import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
 import emailEmitter from "../../utils/sendEmail/emailEvent.js";
 import { generateOtp } from "../../utils/sendEmail/generateOtp.js";
+import {
+  UserNotFoundError,
+  EmailNotVerifiedError,
+  InvalidOtpError,
+  OtpExpiredError,
+  UserAlreadyVerifiedError,
+} from "../../utils/customErrors.js";
 
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
@@ -116,11 +123,7 @@ export const login = async (req, res, next) => {
   }
 
   if (!user.isVerified) {
-    return next(
-      new Error("Please verify your email before logging in.", {
-        cause: 403,
-      })
-    );
+    return next(new EmailNotVerifiedError());
   }
 
   const payload = {
@@ -204,7 +207,7 @@ export const resendCode = async (req, res, next) => {
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
   if (!user) {
-    return next(new Error("No account found with this email", { cause: 404 }));
+    return next(new UserNotFoundError());
   }
 
   const otp = generateOtp();
@@ -212,7 +215,7 @@ export const resendCode = async (req, res, next) => {
 
   if (type === "register") {
     if (user.isVerified) {
-      return next(new Error("User already verified", { cause: 400 }));
+      return next(new UserAlreadyVerifiedError());
     }
 
     user.emailOtp = {
@@ -232,7 +235,7 @@ export const resendCode = async (req, res, next) => {
     });
   } else if (type === "reset-password") {
     if (!user.isVerified) {
-      return next(new Error("Please verify your email first", { cause: 403 }));
+      return next(new EmailNotVerifiedError());
     }
 
     if (!user.passwordOtp || !user.passwordOtp.code) {
@@ -280,11 +283,11 @@ export const confirmEmail = async (req, res, next) => {
   const user = await findOne(userModel, { email });
 
   if (!user) {
-    return next(new Error("No account found with this email", { cause: 404 }));
+    return next(new UserNotFoundError());
   }
 
   if (user.isVerified) {
-    return next(new Error("User already verified", 400));
+    return next(new UserAlreadyVerifiedError());
   }
 
   if (!user.emailOtp || !user.emailOtp.code) {
@@ -294,7 +297,7 @@ export const confirmEmail = async (req, res, next) => {
   }
 
   if (new Date() > user.emailOtp.expiresAt) {
-    return next(new Error("OTP has expired", { cause: 400 }));
+    return next(new OtpExpiredError());
   }
 
   if (user.emailOtp.attempts >= user.emailOtp.maxAttempts) {
@@ -305,7 +308,7 @@ export const confirmEmail = async (req, res, next) => {
   if (!isMatch) {
     user.emailOtp.attempts += 1;
     await user.save();
-    return next(new Error("Invalid OTP", { cause: 400 }));
+    return next(new InvalidOtpError());
   }
 
   user.isVerified = true;
@@ -335,15 +338,11 @@ export const forgotPassword = async (req, res, next) => {
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
   if (!user) {
-    return next(new Error("No account found with this email", { cause: 404 }));
+    return next(new UserNotFoundError());
   }
 
   if (!user.isVerified) {
-    return next(
-      new Error("Please verify your email first", {
-        cause: 403,
-      })
-    );
+    return next(new EmailNotVerifiedError());
   }
 
   const otp = generateOtp();
@@ -385,15 +384,11 @@ export const verifyForgotOtp = async (req, res, next) => {
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
   if (!user) {
-    return next(new Error("No account found with this email", { cause: 404 }));
+    return next(new UserNotFoundError());
   }
 
   if (!user.isVerified) {
-    return next(
-      new Error("Please verify your email first", {
-        cause: 403,
-      })
-    );
+    return next(new EmailNotVerifiedError());
   }
 
   if (!user.passwordOtp || !user.passwordOtp.code) {
@@ -403,9 +398,7 @@ export const verifyForgotOtp = async (req, res, next) => {
   }
 
   if (user.passwordOtp.expiresAt < new Date()) {
-    return next(
-      new Error("OTP expired. Please request again.", { cause: 400 })
-    );
+    return next(new OtpExpiredError());
   }
 
   if (user.passwordOtp.attempts >= user.passwordOtp.maxAttempts) {
@@ -417,7 +410,7 @@ export const verifyForgotOtp = async (req, res, next) => {
   if (!isMatch) {
     user.passwordOtp.attempts += 1;
     await user.save();
-    return next(new Error("Invalid OTP", { cause: 400 }));
+    return next(new InvalidOtpError());
   }
 
   user.passwordOtp.verified = true;
@@ -447,22 +440,26 @@ export const resetPassword = async (req, res, next) => {
 
   const user = await userModel.findOne({ email: email.trim().toLowerCase() });
   if (!user) {
-    return next(new Error("No account found with this email", { cause: 404 }));
+    return next(new UserNotFoundError());
   }
 
   if (!user.isVerified) {
-    return next(new Error("Please verify your email first", { cause: 403 }));
+    return next(new EmailNotVerifiedError());
   }
 
-  if (!user.passwordOtp || !user.passwordOtp.verified) {
+  if (!user.passwordOtp) {
     return next(
-      new Error("OTP not verified. Cannot reset password.", { cause: 403 })
+      new Error("No OTP request found. Please request again.", { cause: 400 })
     );
   }
 
   if (user.passwordOtp.expiresAt < new Date()) {
+    return next(new OtpExpiredError());
+  }
+
+  if (!user.passwordOtp.verified) {
     return next(
-      new Error("OTP expired. Please request again.", { cause: 410 })
+      new Error("OTP not verified. Cannot reset password.", { cause: 403 })
     );
   }
 
