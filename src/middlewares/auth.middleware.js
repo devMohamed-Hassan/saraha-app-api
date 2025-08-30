@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { findById } from "../services/db.service.js";
-import userModel, { Roles } from "../config/models/user.model.js";
+import userModel from "../config/models/user.model.js";
 import { EmailNotVerifiedError, UserNotFoundError } from "../utils/customErrors.js";
+import { Roles } from "../constants/roles.js";
 
 
 
@@ -36,12 +37,12 @@ export const decodeToken = async ({
   }
 
   const accessSignture =
-    decoded.role === Roles.admin
+    decoded.role === Roles.ADMIN
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET
       : process.env.USER_ACCESS_TOKEN_SECRET;
 
   const refreshSignture =
-    decoded.role === Roles.admin
+    decoded.role === Roles.ADMIN
       ? process.env.ADMIN_REFRESH_TOKEN_SECRET
       : process.env.USER_REFRESH_TOKEN_SECRET;
 

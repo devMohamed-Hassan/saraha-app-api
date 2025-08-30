@@ -1,18 +1,9 @@
 import { Schema, get, model, set } from "mongoose";
 import { decrypt, encrypt } from "../../utils/crypto.js";
 import { hash } from "../../utils/hash.js";
-
-export const Roles = {
-  admin: "admin",
-  user: "user",
-};
-Object.freeze(Roles);
-
-export const Gender = {
-  male: "male",
-  female: "female",
-};
-Object.freeze(Gender);
+import { Providers } from "../../constants/providers.js";
+import { Roles } from "../../constants/roles.js";
+import { Gender } from "../../constants/gender.js";
 
 const OtpSchema = new Schema(
   {
@@ -46,7 +37,9 @@ const schema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === Providers.system;
+      },
       minlength: 8,
       set: (value) => hash(value),
     },
@@ -57,11 +50,11 @@ const schema = new Schema(
     role: {
       type: String,
       enum: Object.values(Roles),
-      default: Roles.user,
+      default: Roles.USER,
     },
     gender: {
       type: String,
-      default: Gender.male,
+      default: Gender.MALE,
       enum: Object.values(Gender),
     },
     phone: {
@@ -78,6 +71,11 @@ const schema = new Schema(
     passwordOtp: OtpSchema,
     credentialChangedAt: {
       type: Date,
+    },
+    provider: {
+      type: String,
+      enum: Object.values(Providers),
+      default: Providers.SYSTEM,
     },
   },
 
@@ -98,7 +96,7 @@ schema.virtual("message").get(function () {
       ? "Good afternoon"
       : "Good evening";
 
-  const title = this.gender === Gender.male ? "Mr." : "Ms.";
+  const title = this.gender === Gender.MALE ? "Mr." : "Ms.";
 
   return `${timeMsg}, ${title} ${this.name}`;
 });
