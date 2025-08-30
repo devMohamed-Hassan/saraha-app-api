@@ -32,7 +32,6 @@ export const decodeToken = async ({
     return next(new Error("Invalid token", { cause: 401 }));
   }
 
-  decoded.role;
   const accessSignture =
     decoded.role === Roles.admin
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET

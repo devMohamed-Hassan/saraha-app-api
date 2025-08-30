@@ -8,7 +8,8 @@ router.post("/login", authServices.login);
 
 router.post("/refersh-token", authServices.refreshToken);
 
-router.patch("/resend-code", authServices.resendCode);
+router.patch("/resend-otp/:type", authServices.resendCode);
+
 router.post("/confirm-email", authServices.confirmEmail);
 
 router.post("/forgot-password", authServices.forgotPassword);

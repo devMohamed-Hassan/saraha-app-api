@@ -195,6 +195,7 @@ export const refreshToken = async (req, res, next) => {
 
 export const resendCode = async (req, res, next) => {
   const { email } = req.body;
+  const { type } = req.params;
 
   if (!email) {
     return next(new Error("Email is required", { cause: 400 }));
@@ -206,35 +207,67 @@ export const resendCode = async (req, res, next) => {
     return next(new Error("No account found with this email", { cause: 404 }));
   }
 
-  if (user.isVerified) {
-    return next(new Error("User already verified", 400));
-  }
-
   const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  user.emailOtp = {
-    code: otp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    verified: false,
-    attempts: 0,
-    maxAttempts: 5,
-  };
+  if (type === "register") {
+    if (user.isVerified) {
+      return next(new Error("User already verified", { cause: 400 }));
+    }
 
-  await user.save();
+    user.emailOtp = {
+      code: otp,
+      expiresAt,
+      verified: false,
+      attempts: 0,
+      maxAttempts: 5,
+    };
 
-  emailEmitter.emit("confirmEmail", {
-    email: user.email,
-    otp,
-    userName: user.name,
-  });
+    await user.save();
+
+    emailEmitter.emit("confirmEmail", {
+      email: user.email,
+      otp,
+      userName: user.name,
+    });
+  } else if (type === "reset-password") {
+    if (!user.isVerified) {
+      return next(new Error("Please verify your email first", { cause: 403 }));
+    }
+
+    if (!user.passwordOtp || !user.passwordOtp.code) {
+      return next(
+        new Error("No forgot password request found for this account.", {
+          cause: 400,
+        })
+      );
+    }
+
+    user.passwordOtp = {
+      code: otp,
+      expiresAt,
+      verified: false,
+      attempts: 0,
+      maxAttempts: 5,
+    };
+
+    await user.save();
+
+    emailEmitter.emit("forgotPassword", {
+      email: user.email,
+      otp,
+      userName: user.name,
+    });
+  } else {
+    return next(new Error("Invalid type in URL", { cause: 400 }));
+  }
 
   return handleSuccess({
     res,
     statusCode: 200,
-    message: "OTP resent successfully. Please check your email.",
-    data: { expiresAt: user.emailOtp.expiresAt },
+    message: `OTP resent successfully for ${type}. Please check your email.`,
+    data: { expiresAt },
   });
-  
 };
 
 export const confirmEmail = async (req, res, next) => {
@@ -247,7 +280,7 @@ export const confirmEmail = async (req, res, next) => {
   const user = await findOne(userModel, { email });
 
   if (!user) {
-    return next(new Error("User not found", { cause: 404 }));
+    return next(new Error("No account found with this email", { cause: 404 }));
   }
 
   if (user.isVerified) {
@@ -413,11 +446,13 @@ export const resetPassword = async (req, res, next) => {
   }
 
   const user = await userModel.findOne({ email: email.trim().toLowerCase() });
-  if (!user)
+  if (!user) {
     return next(new Error("No account found with this email", { cause: 404 }));
+  }
 
-  if (!user.isVerified)
-    return next(new Error("Email not verified", { cause: 403 }));
+  if (!user.isVerified) {
+    return next(new Error("Please verify your email first", { cause: 403 }));
+  }
 
   if (!user.passwordOtp || !user.passwordOtp.verified) {
     return next(
