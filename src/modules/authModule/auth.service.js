@@ -17,47 +17,12 @@ import { OAuth2Client } from "google-auth-library";
 import { Providers } from "../../utils/constants/providers.js";
 import { Roles } from "../../utils/constants/roles.js";
 
-
 const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
 
 export const signUp = async (req, res, next) => {
-  let { name, email, password, confirmPassword, role, gender, phone, age } =
+  const { name, email, password, confirmPassword, role, gender, phone, age } =
     req.body;
-
-  if (
-    !name ||
-    !email ||
-    !password ||
-    !phone ||
-    !age ||
-    !gender ||
-    !confirmPassword
-  ) {
-    return next(new Error("All fields are required", { cause: 400 }));
-  }
-
-  if (name.length < 2) {
-    return next(
-      new Error("Name must be at least 2 characters", { cause: 400 })
-    );
-  }
-
-  email = email.trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return next(new Error("Invalid email format", { cause: 400 }));
-  }
-
-  if (password.length < 6) {
-    return next(
-      new Error("Password must be at least 6 characters", { cause: 400 })
-    );
-  }
-
-  if (password !== confirmPassword) {
-    return next(new Error("Passwords do not match", { cause: 400 }));
-  }
 
   const isExist = await findOne(userModel, { email });
   if (isExist) {
@@ -104,16 +69,6 @@ export const signUp = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   let { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new Error("Email and password are required", { cause: 400 });
-  }
-
-  email = email.trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new Error("Invalid email format", { cause: 400 });
-  }
 
   const user = await findOne(userModel, { email });
 

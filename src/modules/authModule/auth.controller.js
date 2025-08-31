@@ -1,10 +1,12 @@
 import { Router } from "express";
 import * as authServices from "./auth.service.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { loginSchema, signUpSchema } from "./auth.validation.js";
 
 const router = Router();
 
-router.post("/signup", authServices.signUp);
-router.post("/login", authServices.login);
+router.post("/signup", validate(signUpSchema), authServices.signUp);
+router.post("/login", validate(loginSchema), authServices.login);
 
 router.post("/refersh-token", authServices.refreshToken);
 
