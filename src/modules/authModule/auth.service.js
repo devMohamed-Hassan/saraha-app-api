@@ -166,10 +166,6 @@ export const resendCode = async (req, res, next) => {
   const { email } = req.body;
   const { type } = req.params;
 
-  if (!email) {
-    return next(new Error("Email is required", { cause: 400 }));
-  }
-
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
   if (!user) {
@@ -242,10 +238,6 @@ export const resendCode = async (req, res, next) => {
 export const confirmEmail = async (req, res, next) => {
   const { email, otp } = req.body;
 
-  if (!email || !otp) {
-    return next(new Error("Email and OTP are required", 400));
-  }
-
   const user = await findOne(userModel, { email });
 
   if (!user) {
@@ -297,10 +289,6 @@ export const confirmEmail = async (req, res, next) => {
 export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
 
-  if (!email) {
-    return next(new Error("Email is required", { cause: 400 }));
-  }
-
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
   if (!user) {
@@ -342,10 +330,6 @@ export const forgotPassword = async (req, res, next) => {
 
 export const verifyForgotOtp = async (req, res, next) => {
   const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    return next(new Error("Email and OTP are required", { cause: 400 }));
-  }
 
   const user = await findOne(userModel, { email: email.trim().toLowerCase() });
 
@@ -392,18 +376,6 @@ export const verifyForgotOtp = async (req, res, next) => {
 export const resetPassword = async (req, res, next) => {
   const { email, newPassword, confirmPassword } = req.body;
 
-  if (!email || !newPassword || !confirmPassword) {
-    return next(
-      new Error("Email, new password and confirm password are required", {
-        cause: 400,
-      })
-    );
-  }
-
-  if (newPassword !== confirmPassword) {
-    return next(new Error("Passwords do not match", { cause: 400 }));
-  }
-
   const user = await userModel.findOne({ email: email.trim().toLowerCase() });
   if (!user) {
     return next(new UserNotFoundError());
@@ -443,10 +415,6 @@ export const resetPassword = async (req, res, next) => {
 
 export const socialLogin = async (req, res, next) => {
   const { idToken } = req.body;
-
-  if (!idToken) {
-    return next(new Error("ID Token is required"));
-  }
 
   const ticket = await client.verifyIdToken({
     idToken,

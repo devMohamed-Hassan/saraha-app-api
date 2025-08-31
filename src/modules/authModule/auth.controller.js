@@ -1,7 +1,16 @@
 import { Router } from "express";
 import * as authServices from "./auth.service.js";
 import { validate } from "../../middlewares/validate.middleware.js";
-import { loginSchema, signUpSchema } from "./auth.validation.js";
+import {
+  confirmEmailSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  resendOtpSchema,
+  resetPasswordSchema,
+  signUpSchema,
+  socialLoginSchema,
+  verifyForgotOtpSchema,
+} from "./auth.validation.js";
 
 const router = Router();
 
@@ -10,14 +19,40 @@ router.post("/login", validate(loginSchema), authServices.login);
 
 router.post("/refersh-token", authServices.refreshToken);
 
-router.patch("/resend-otp/:type", authServices.resendCode);
+router.patch(
+  "/resend-otp/:type",
+  validate(resendOtpSchema),
+  authServices.resendCode
+);
 
-router.post("/confirm-email", authServices.confirmEmail);
+router.post(
+  "/confirm-email",
+  validate(confirmEmailSchema),
+  authServices.confirmEmail
+);
 
-router.post("/forgot-password", authServices.forgotPassword);
-router.post("/verify-reset-code", authServices.verifyForgotOtp);
-router.put("/reset-password", authServices.resetPassword);
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  authServices.forgotPassword
+);
 
-router.post("/social-login", authServices.socialLogin);
+router.post(
+  "/verify-reset-code",
+  validate(verifyForgotOtpSchema),
+  authServices.verifyForgotOtp
+);
+
+router.put(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  authServices.resetPassword
+);
+
+router.post(
+  "/social-login",
+  validate(socialLoginSchema),
+  authServices.socialLogin
+);
 
 export default router;
