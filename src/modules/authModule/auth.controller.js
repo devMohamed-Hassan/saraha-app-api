@@ -65,6 +65,8 @@ router.patch(
   authServices.updateEmail
 );
 
+router.post("/resend-update-email", auth(), authServices.resendUpdateEmail);
+
 router.patch(
   "/confirm-update-email",
   validate(confirmUpdateEmailSchema),

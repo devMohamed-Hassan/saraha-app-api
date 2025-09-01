@@ -565,3 +565,41 @@ export const confirmUpdateEmail = async (req, res, next) => {
     message: "Your email address has been successfully updated.",
   });
 };
+
+export const resendUpdateEmail = async (req, res, next) => {
+  const user = req.user;
+
+  if (!user.pendingEmail) {
+    return next(new Error("No email change request found.", { cause: 400 }));
+  }
+
+  const currentEmailOtp = buildOtp(10, 5);
+  const newEmailOtp = buildOtp(10, 5);
+
+  user.emailOtp = currentEmailOtp;
+  user.newEmailOtp = newEmailOtp;
+
+  await user.save();
+
+  // Send OTP to current email
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.changeEmail.type,
+    email: user.email,
+    userName: user.name,
+    otp: currentEmailOtp.code,
+  });
+
+  // Send OTP to new email (pendingEmail)
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.changeEmail.type,
+    email: user.pendingEmail,
+    userName: user.name,
+    otp: newEmailOtp.code,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message:
+      "Verification codes resent to your current and new email addresses.",
+  });
+};
