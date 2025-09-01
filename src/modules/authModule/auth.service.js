@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { create, find, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
-import emailEmitter from "../../utils/sendEmail/emailEvent.js";
+import emailEmitter, { emailEvents } from "../../utils/sendEmail/emailEvent.js";
 import { generateOtp } from "../../utils/sendEmail/generateOtp.js";
 import {
   UserNotFoundError,
@@ -48,10 +48,11 @@ export const signUp = async (req, res, next) => {
     },
   });
 
-  emailEmitter.emit("confirmEmail", {
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.confirmEmail.type,
     email: user.email,
-    otp,
     userName: user.name,
+    otp,
   });
 
   handleSuccess({
@@ -190,10 +191,11 @@ export const resendCode = async (req, res, next) => {
 
     await user.save();
 
-    emailEmitter.emit("confirmEmail", {
+    emailEmitter.emit("sendEmail", {
+      type: emailEvents.confirmEmail.type,
       email: user.email,
-      otp,
       userName: user.name,
+      otp,
     });
   } else if (type === "reset-password") {
     if (!user.isVerified) {
@@ -218,10 +220,11 @@ export const resendCode = async (req, res, next) => {
 
     await user.save();
 
-    emailEmitter.emit("forgotPassword", {
+    emailEmitter.emit("sendEmail", {
+      type: emailEvents.forgotPassword.type,
       email: user.email,
-      otp,
       userName: user.name,
+      otp,
     });
   } else {
     return next(new Error("Invalid type in URL", { cause: 400 }));
@@ -311,7 +314,8 @@ export const forgotPassword = async (req, res, next) => {
 
   await user.save();
 
-  emailEmitter.emit("forgotPassword", {
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.forgotPassword.type,
     email: user.email,
     userName: user.name,
     otp,
@@ -514,10 +518,11 @@ export const updateEmail = async (req, res, next) => {
     maxAttempts: 5,
   };
 
-  emailEmitter.emit("changeEmail", {
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.changeEmail.type,
     email: user.email,
-    otp: currentEmailOtp,
     userName: user.name,
+    otp: currentEmailOtp,
   });
 
   // New Email
@@ -532,10 +537,11 @@ export const updateEmail = async (req, res, next) => {
 
   user.pendingEmail = newEmail;
 
-  emailEmitter.emit("changeEmail", {
+  emailEmitter.emit("sendEmail", {
+    type: emailEvents.changeEmail.type,
     email: newEmail,
-    otp: newEmailOtp,
     userName: user.name,
+    otp: newEmailOtp,
   });
 
   await user.save();
@@ -584,6 +590,7 @@ export const confirmUpdateEmail = async (req, res, next) => {
 
   user.emailOtp = undefined;
   user.newEmailOtp = undefined;
+  user.credentialChangedAt = new Date();
 
   await user.save();
 

@@ -4,67 +4,49 @@ import { sendEmail } from "./sendEmail.js";
 
 const emailEmitter = new EventEmitter();
 
-emailEmitter.on("confirmEmail", async ({ email, userName, otp }) => {
-  const subject = "Please confirm your email";
-
-  const html = emailTemplate({
-    code: otp,
-    name: userName,
+export const emailEvents = {
+  confirmEmail: {
+    type: "confirmEmail",
     subject: "Please confirm your email",
     message:
       "Welcome to Saraha! To complete your registration, use the secure verification code below:",
     expiryMinutes: 10,
-  });
-
-  await sendEmail({
-    to: email,
-    html,
-    subject,
-  });
-
-  console.log(`Confirmation email sent to ${email}`);
-});
-
-emailEmitter.on("forgotPassword", async ({ email, userName, otp }) => {
-  const subject = "Password Reset Request";
-
-  const html = emailTemplate({
-    code: otp,
-    name: userName,
+  },
+  forgotPassword: {
+    type: "forgotPassword",
     subject: "Password Reset Request",
     message:
       "We received a request to reset your password. Use the OTP below to proceed:",
     expiryMinutes: 5,
-  });
-
-  await sendEmail({
-    to: email,
-    html,
-    subject,
-  });
-
-  console.log(`Password reset email sent to ${email}`);
-});
-
-emailEmitter.on("changeEmail", async ({ email, userName, otp }) => {
-  const subject = "Confirm your new email address";
-
-  const html = emailTemplate({
-    code: otp,
-    name: userName,
-    subject,
+  },
+  changeEmail: {
+    type: "changeEmail",
+    subject: "Confirm your new email address",
     message:
       "We received a request to change your email address on Saraha. To confirm this change, please use the verification code below:",
     expiryMinutes: 10,
-  });
+  },
+};
 
-  await sendEmail({
-    to: email,
-    html,
-    subject,
-  });
+emailEmitter.on("sendEmail", async ({ type, email, userName, otp }) => {
+  try {
+    const config = emailEvents[type];
+    if (!config) throw new Error(`Unknown email type: ${type}`);
 
-  console.log(`Change email confirmation sent to ${email}`);
+    const html = emailTemplate({
+      code: otp,
+      name: userName,
+      subject: config.subject,
+      message: config.message,
+      expiryMinutes: config.expiryMinutes,
+    });
+
+    await sendEmail({ to: email, html, subject: config.subject });
+
+    console.log(`${config.subject} sent to ${email}`);
+  } catch (err) {
+    console.error(`Failed to send ${type} email:`, err.message);
+  }
 });
 
 export default emailEmitter;
