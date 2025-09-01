@@ -5,7 +5,7 @@ import { create, find, findById, findOne } from "../../services/db.service.js";
 import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
 import emailEmitter, { emailEvents } from "../../utils/sendEmail/emailEvent.js";
-import { generateOtp } from "../../utils/sendEmail/generateOtp.js";
+
 import {
   UserNotFoundError,
   EmailNotVerifiedError,
@@ -16,6 +16,7 @@ import {
 import { OAuth2Client } from "google-auth-library";
 import { Providers } from "../../utils/constants/providers.js";
 import { Roles } from "../../utils/constants/roles.js";
+import { buildOtp } from "../../utils/otp/buildOtp.js";
 
 const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
@@ -29,7 +30,7 @@ export const signUp = async (req, res, next) => {
     throw new Error("This email is already registered", { cause: 400 });
   }
 
-  const otp = generateOtp();
+  const otp = buildOtp();
 
   const user = await create(userModel, {
     name,
@@ -39,20 +40,14 @@ export const signUp = async (req, res, next) => {
     gender,
     age,
     phone,
-    emailOtp: {
-      code: otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      verified: false,
-      attempts: 0,
-      maxAttempts: 5,
-    },
+    emailOtp: otp,
   });
 
   emailEmitter.emit("sendEmail", {
     type: emailEvents.confirmEmail.type,
     email: user.email,
     userName: user.name,
-    otp,
+    otp: otp.code,
   });
 
   handleSuccess({
@@ -173,21 +168,14 @@ export const resendCode = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  const otp = buildOtp();
 
   if (type === "register") {
     if (user.isVerified) {
       return next(new UserAlreadyVerifiedError());
     }
 
-    user.emailOtp = {
-      code: otp,
-      expiresAt,
-      verified: false,
-      attempts: 0,
-      maxAttempts: 5,
-    };
+    user.emailOtp = otp;
 
     await user.save();
 
@@ -195,7 +183,7 @@ export const resendCode = async (req, res, next) => {
       type: emailEvents.confirmEmail.type,
       email: user.email,
       userName: user.name,
-      otp,
+      otp: otp.code,
     });
   } else if (type === "reset-password") {
     if (!user.isVerified) {
@@ -210,13 +198,7 @@ export const resendCode = async (req, res, next) => {
       );
     }
 
-    user.passwordOtp = {
-      code: otp,
-      expiresAt,
-      verified: false,
-      attempts: 0,
-      maxAttempts: 5,
-    };
+    user.passwordOtp = otp;
 
     await user.save();
 
@@ -224,7 +206,7 @@ export const resendCode = async (req, res, next) => {
       type: emailEvents.forgotPassword.type,
       email: user.email,
       userName: user.name,
-      otp,
+      otp: otp.code,
     });
   } else {
     return next(new Error("Invalid type in URL", { cause: 400 }));
@@ -302,23 +284,16 @@ export const forgotPassword = async (req, res, next) => {
     return next(new EmailNotVerifiedError());
   }
 
-  const otp = generateOtp();
+  const otp = buildOtp();
 
-  user.passwordOtp = {
-    code: otp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    verified: false,
-    attempts: 0,
-    maxAttempts: 5,
-  };
-
+  user.passwordOtp = otp;
   await user.save();
 
   emailEmitter.emit("sendEmail", {
     type: emailEvents.forgotPassword.type,
     email: user.email,
     userName: user.name,
-    otp,
+    otp: otp.code,
   });
 
   handleSuccess({
@@ -511,31 +486,19 @@ export const updateEmail = async (req, res, next) => {
   user.isVerified = false;
 
   // Current Email
-  const currentEmailOtp = generateOtp();
-  user.emailOtp = {
-    code: currentEmailOtp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    verified: false,
-    attempts: 0,
-    maxAttempts: 5,
-  };
+  const currentEmailOtp = buildOtp();
+  user.emailOtp = currentEmailOtp;
 
   emailEmitter.emit("sendEmail", {
     type: emailEvents.changeEmail.type,
     email: user.email,
     userName: user.name,
-    otp: currentEmailOtp,
+    otp: currentEmailOtp.code,
   });
 
   // New Email
-  const newEmailOtp = generateOtp();
-  user.newEmailOtp = {
-    code: newEmailOtp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    verified: false,
-    attempts: 0,
-    maxAttempts: 5,
-  };
+  const newEmailOtp = buildOtp();
+  user.newEmailOtp = newEmailOtp;
 
   user.pendingEmail = newEmail;
 
@@ -543,7 +506,7 @@ export const updateEmail = async (req, res, next) => {
     type: emailEvents.changeEmail.type,
     email: newEmail,
     userName: user.name,
-    otp: newEmailOtp,
+    otp: newEmailOtp.code,
   });
 
   await user.save();
