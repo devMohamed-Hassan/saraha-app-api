@@ -63,8 +63,8 @@ const schema = new Schema(
       required: function () {
         return this.provider === Providers.system;
       },
-      get: (value) => decrypt(value),
-      set: (value) => encrypt(value),
+      get: (value) => (value ? decrypt(value) : value),
+      set: (value) => (value ? encrypt(value) : value),
     },
     isVerified: {
       type: Boolean,
