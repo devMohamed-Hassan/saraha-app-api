@@ -29,7 +29,7 @@ export const publicProfile = async (req, res, next) => {
   const id = req.params.id;
   const user = await userModel.findById(id).select("name");
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return next(new Error("User not found", { cause: 404 }));
   }
   const messageFormUrl = `${req.protocol}://${req.get("host")}/send-message/${
     user.id
