@@ -14,12 +14,14 @@ export const getUserProfile = async (req, res, next) => {
 
 export const shareProfile = async (req, res, next) => {
   const user = req.user;
-  const shareLink = `${process.env.HOST}/user/public/${user.id}`;
+  const shareLink = `${req.protocol}://${req.get("host")}/user/public/${
+    user.id
+  }`;
   handleSuccess({
     res,
     statusCode: 200,
     message: "success",
-    data: { shareLink }, 
+    data: { shareLink },
   });
 };
 
@@ -29,13 +31,17 @@ export const publicProfile = async (req, res, next) => {
   if (!user) {
     return res.status(404).json({ error: "User not found" });
   }
+  const messageFormUrl = `${req.protocol}://${req.get("host")}/send-message/${
+    user.id
+  }`;
+
   handleSuccess({
     res,
     statusCode: 200,
     message: "success",
     data: {
       username: user.username,
-      messageFormUrl: `${process.env.CLIENT_URL}/send-message/${user._id}`,
+      messageFormUrl,
     },
   });
 };
