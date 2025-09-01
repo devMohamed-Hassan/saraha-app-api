@@ -88,7 +88,7 @@ export const login = async (req, res, next) => {
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
-  if (!user.isVerified) {
+  if (!user.isVerified && !user.pendingEmail) {
     return next(new EmailNotVerifiedError());
   }
 
@@ -480,5 +480,116 @@ export const socialLogin = async (req, res, next) => {
         expiresIn: 3600,
       },
     },
+  });
+};
+
+export const updateEmail = async (req, res, next) => {
+  const { currentEmail, newEmail } = req.body;
+  const user = req.user;
+
+  if (currentEmail !== user.email) {
+    return next(
+      new Error("The email you entered does not match your account.", {
+        cause: 400,
+      })
+    );
+  }
+
+  const existingUser = await userModel.findOne({ email: newEmail });
+  if (existingUser) {
+    return next(new Erro("This email address is already registered."), {
+      cause: 400,
+    });
+  }
+
+  user.isVerified = false;
+
+  // Current Email
+  const currentEmailOtp = generateOtp();
+  user.emailOtp = {
+    code: currentEmailOtp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    verified: false,
+    attempts: 0,
+    maxAttempts: 5,
+  };
+
+  emailEmitter.emit("changeEmail", {
+    email: user.email,
+    otp: currentEmailOtp,
+    userName: user.name,
+  });
+
+  // New Email
+  const newEmailOtp = generateOtp();
+  user.newEmailOtp = {
+    code: newEmailOtp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    verified: false,
+    attempts: 0,
+    maxAttempts: 5,
+  };
+
+  user.pendingEmail = newEmail;
+
+  emailEmitter.emit("changeEmail", {
+    email: newEmail,
+    otp: newEmailOtp,
+    userName: user.name,
+  });
+
+  await user.save();
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Verification codes sent to your current and new email addresses",
+  });
+};
+
+export const confirmUpdateEmail = async (req, res, next) => {
+  const { oldEmailOtp, newEmailOtp } = req.body;
+  const user = req.user;
+
+  if (!user.pendingEmail) {
+    return next(new Error("No email change request found.", { cause: 400 }));
+  }
+
+  if (
+    new Date() > user.emailOtp.expiresAt ||
+    new Date() > user.newEmailOtp.expiresAt
+  ) {
+    return next(new OtpExpiredError());
+  }
+
+  if (
+    user.emailOtp.attempts >= user.emailOtp.maxAttempts ||
+    user.newEmailOtp.attempts >= user.newEmailOtp.maxAttempts
+  ) {
+    return next(new Error("Max OTP attempts reached", { cause: 400 }));
+  }
+
+  const isMatchOld = compare(oldEmailOtp, user.emailOtp.code);
+  const isMatchNew = compare(newEmailOtp, user.newEmailOtp.code);
+
+  if (!isMatchOld || !isMatchNew) {
+    user.emailOtp.attempts += !isMatchOld ? 1 : 0;
+    user.newEmailOtp.attempts += !isMatchNew ? 1 : 0;
+    await user.save();
+    return next(new InvalidOtpError());
+  }
+
+  user.email = user.pendingEmail;
+  user.pendingEmail = undefined;
+  user.isVerified = true;
+
+  user.emailOtp = undefined;
+  user.newEmailOtp = undefined;
+
+  await user.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Your email address has been successfully updated.",
   });
 };

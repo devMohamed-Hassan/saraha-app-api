@@ -11,6 +11,7 @@ import {
   socialLoginSchema,
   verifyForgotOtpSchema,
 } from "./auth.validation.js";
+import { auth } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -54,5 +55,8 @@ router.post(
   validate(socialLoginSchema),
   authServices.socialLogin
 );
+
+router.patch("/update-email", auth(), authServices.updateEmail);
+router.patch("/confirm-update-email", auth(), authServices.confirmUpdateEmail);
 
 export default router;

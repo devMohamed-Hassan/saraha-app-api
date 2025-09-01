@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
 import { findById } from "../services/db.service.js";
 import userModel from "../config/models/user.model.js";
-import { EmailNotVerifiedError, UserNotFoundError } from "../utils/customErrors.js";
+import {
+  EmailNotVerifiedError,
+  UserNotFoundError,
+} from "../utils/customErrors.js";
 import { Roles } from "../utils/constants/roles.js";
-
 
 export const types = {
   access: "access",
@@ -53,7 +55,7 @@ export const decodeToken = async ({
   if (!user) {
     return next(new UserNotFoundError());
   }
-  if (!user.isVerified) {
+  if (!user.isVerified && !user.pendingEmail) {
     return next(new EmailNotVerifiedError());
   }
   if (

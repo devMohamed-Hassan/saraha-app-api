@@ -46,4 +46,25 @@ emailEmitter.on("forgotPassword", async ({ email, userName, otp }) => {
   console.log(`Password reset email sent to ${email}`);
 });
 
+emailEmitter.on("changeEmail", async ({ email, userName, otp }) => {
+  const subject = "Confirm your new email address";
+
+  const html = emailTemplate({
+    code: otp,
+    name: userName,
+    subject,
+    message:
+      "We received a request to change your email address on Saraha. To confirm this change, please use the verification code below:",
+    expiryMinutes: 10,
+  });
+
+  await sendEmail({
+    to: email,
+    html,
+    subject,
+  });
+
+  console.log(`Change email confirmation sent to ${email}`);
+});
+
 export default emailEmitter;

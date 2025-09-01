@@ -71,7 +71,14 @@ const schema = new Schema(
       default: false,
     },
     emailOtp: OtpSchema,
+    newEmailOtp: OtpSchema,
     passwordOtp: OtpSchema,
+    pendingEmail: {
+      type: String,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     credentialChangedAt: {
       type: Date,
     },
