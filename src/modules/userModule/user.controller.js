@@ -7,5 +7,6 @@ const router = Router();
 
 router.get("/", auth(), allowTo(Roles.USER), getUserProfile);
 router.get("/share-profile", auth(), shareProfile);
+router.get("/public/:id", publicProfile);
 
 export default router;
