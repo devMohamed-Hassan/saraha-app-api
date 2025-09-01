@@ -3,12 +3,14 @@ import * as authServices from "./auth.service.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import {
   confirmEmailSchema,
+  confirmUpdateEmailSchema,
   forgotPasswordSchema,
   loginSchema,
   resendOtpSchema,
   resetPasswordSchema,
   signUpSchema,
   socialLoginSchema,
+  updateEmailSchema,
   verifyForgotOtpSchema,
 } from "./auth.validation.js";
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -56,7 +58,18 @@ router.post(
   authServices.socialLogin
 );
 
-router.patch("/update-email", auth(), authServices.updateEmail);
-router.patch("/confirm-update-email", auth(), authServices.confirmUpdateEmail);
+router.patch(
+  "/update-email",
+  validate(updateEmailSchema),
+  auth(),
+  authServices.updateEmail
+);
+
+router.patch(
+  "/confirm-update-email",
+  validate(confirmUpdateEmailSchema),
+  auth(),
+  authServices.confirmUpdateEmail
+);
 
 export default router;

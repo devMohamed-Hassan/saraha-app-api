@@ -501,9 +501,11 @@ export const updateEmail = async (req, res, next) => {
 
   const existingUser = await userModel.findOne({ email: newEmail });
   if (existingUser) {
-    return next(new Erro("This email address is already registered."), {
-      cause: 400,
-    });
+    return next(
+      new Error("This email address is already registered.", {
+        cause: 400,
+      })
+    );
   }
 
   user.isVerified = false;

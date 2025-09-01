@@ -104,3 +104,32 @@ export const socialLoginSchema = {
     }),
   }),
 };
+
+// Update Email Schema
+export const updateEmailSchema = {
+  body: Joi.object({
+    currentEmail: emailValidator.messages({
+      "any.required": "Current email is required.",
+      "string.empty": "Current email cannot be empty.",
+    }),
+    newEmail: emailValidator.not(Joi.ref("currentEmail")).messages({
+      "any.required": "New email is required.",
+      "string.empty": "New email cannot be empty.",
+      "any.invalid": "New email must be different from current email.",
+    }),
+  }),
+};
+
+// Confirm Update Email Schema
+export const confirmUpdateEmailSchema = {
+  body: Joi.object({
+    oldEmailOtp: otpValidator.messages({
+      "any.required": "Old email OTP is required.",
+      "string.empty": "Old email OTP cannot be empty.",
+    }),
+    newEmailOtp: otpValidator.messages({
+      "any.required": "New email OTP is required.",
+      "string.empty": "New email OTP cannot be empty.",
+    }),
+  }),
+};
