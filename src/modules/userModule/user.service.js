@@ -27,7 +27,7 @@ export const shareProfile = async (req, res, next) => {
 
 export const publicProfile = async (req, res, next) => {
   const id = req.params.id;
-  const user = await userModel.findById(id).select("username");
+  const user = await userModel.findById(id).select("name");
   if (!user) {
     return res.status(404).json({ error: "User not found" });
   }
@@ -40,8 +40,31 @@ export const publicProfile = async (req, res, next) => {
     statusCode: 200,
     message: "success",
     data: {
-      username: user.username,
+      username: user.name,
       messageFormUrl,
     },
+  });
+};
+
+export const updateUser = async (req, res, next) => {
+  const { name, phone } = req.body;
+  const user = req.user;
+
+  const updatedUser = await userModel
+    .findByIdAndUpdate(user._id, {
+      name,
+      phone,
+    })
+    .select("name phone");
+
+  if (!updatedUser) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Profile updated successfully",
+    data: updatedUser,
   });
 };
