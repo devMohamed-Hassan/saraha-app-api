@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deactivate,
   getUserProfile,
   publicProfile,
   shareProfile,
@@ -16,5 +17,7 @@ router.get("/share-profile", auth(), shareProfile);
 router.get("/public/:id", publicProfile);
 
 router.patch("/update", auth(), updateUser);
+
+router.patch("/:id/deactivate", auth(), deactivate);
 
 export default router;

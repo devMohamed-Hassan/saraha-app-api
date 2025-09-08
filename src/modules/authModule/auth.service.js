@@ -27,7 +27,7 @@ export const signUp = async (req, res, next) => {
 
   const isExist = await findOne(userModel, { email });
   if (isExist) {
-    throw new Error("This email is already registered", { cause: 400 });
+    return next(new Error("This email is already registered", { cause: 400 }));
   }
 
   const otp = buildOtp();
@@ -82,6 +82,12 @@ export const login = async (req, res, next) => {
 
   if (!isMatch) {
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
+  }
+
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
   }
 
   if (!user.isVerified && !user.pendingEmail) {
@@ -168,6 +174,12 @@ export const resendCode = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
+
   const otp = buildOtp();
 
   if (type === "register") {
@@ -229,6 +241,12 @@ export const confirmEmail = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
+
   if (user.isVerified) {
     return next(new UserAlreadyVerifiedError());
   }
@@ -280,6 +298,12 @@ export const forgotPassword = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
+
   if (!user.isVerified) {
     return next(new EmailNotVerifiedError());
   }
@@ -314,6 +338,12 @@ export const verifyForgotOtp = async (req, res, next) => {
 
   if (!user) {
     return next(new UserNotFoundError());
+  }
+
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
   }
 
   if (!user.isVerified) {
@@ -360,6 +390,12 @@ export const resetPassword = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
+
   if (!user.isVerified) {
     return next(new EmailNotVerifiedError());
   }
@@ -403,6 +439,12 @@ export const socialLogin = async (req, res, next) => {
   const { email, name, picture, sub } = ticket.getPayload();
 
   let user = await userModel.findOne({ email });
+
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
 
   if (user?.provider === Providers.SYSTEM) {
     return next(new Error("Please login using system account", 401));

@@ -52,12 +52,21 @@ export const decodeToken = async ({
   const payload = jwt.verify(token, secret);
 
   const user = await findById(userModel, payload._id);
+
   if (!user) {
     return next(new UserNotFoundError());
   }
+
+  if (!user.isActive) {
+    return next(
+      new Error("This account has been deactivated.", { cause: 403 })
+    );
+  }
+
   if (!user.isVerified && !user.pendingEmail) {
     return next(new EmailNotVerifiedError());
   }
+
   if (
     user.credentialChangedAt &&
     payload.iat * 1000 < user.credentialChangedAt.getTime()
@@ -68,7 +77,7 @@ export const decodeToken = async ({
   return user;
 };
 
-export const auth = (req, res, next) => {
+export const auth = () => {
   return async (req, res, next) => {
     const { authorization } = req.headers;
     const user = await decodeToken({

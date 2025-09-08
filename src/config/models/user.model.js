@@ -1,4 +1,4 @@
-import { Schema, get, model, set } from "mongoose";
+import { Schema, Types, get, model, set } from "mongoose";
 import { decrypt, encrypt } from "../../utils/crypto.js";
 import { hash } from "../../utils/hash.js";
 import { Providers } from "../../utils/constants/providers.js";
@@ -75,7 +75,6 @@ const schema = new Schema(
     passwordOtp: OtpSchema,
     pendingEmail: {
       type: String,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -86,6 +85,18 @@ const schema = new Schema(
       type: String,
       enum: Object.values(Providers),
       default: Providers.SYSTEM,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    deletedBy: {
+      type: Types.ObjectId,
+      ref: "users",
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
 
@@ -120,9 +131,18 @@ function commonTransform(doc, ret) {
     ...ret,
     _id: undefined,
     __v: undefined,
-    password: undefined,
+    // password: undefined,
+    // isDeleted: undefined,
+    // deletedAt: undefined,
   };
 }
+
+schema.methods.deactivate = function (deletedBy) {
+  this.isActive = false;
+  this.deletedBy = deletedBy;
+  this.deletedAt = new Date();
+  return this.save();
+};
 
 const userModel = model("users", schema);
 export default userModel;
