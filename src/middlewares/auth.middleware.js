@@ -57,12 +57,6 @@ export const decodeToken = async ({
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
-    return next(
-      new Error("This account has been deactivated.", { cause: 403 })
-    );
-  }
-
   if (!user.isVerified && !user.pendingEmail) {
     return next(new EmailNotVerifiedError());
   }
@@ -77,13 +71,20 @@ export const decodeToken = async ({
   return user;
 };
 
-export const auth = () => {
+export const auth = (activation = true) => {
   return async (req, res, next) => {
     const { authorization } = req.headers;
     const user = await decodeToken({
       authorization,
       next,
     });
+    if (activation) {
+      if (!user.isActive) {
+        return next(
+          new Error("This account has been deactivated.", { cause: 403 })
+        );
+      }
+    }
     req.user = user;
     next();
   };

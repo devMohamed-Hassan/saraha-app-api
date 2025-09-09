@@ -3,6 +3,7 @@ import {
   deactivate,
   getUserProfile,
   publicProfile,
+  restoreAccount,
   shareProfile,
   updateUser,
 } from "./user.service.js";
@@ -19,5 +20,6 @@ router.get("/public/:id", publicProfile);
 router.patch("/update", auth(), updateUser);
 
 router.patch("/:id/deactivate", auth(), deactivate);
+router.patch("/:id/restore-account", auth(false), restoreAccount);
 
 export default router;

@@ -105,3 +105,47 @@ export const deactivate = async (req, res, next) => {
     },
   });
 };
+
+export const restoreAccount = async (req, res, next) => {
+  const { id } = req.params;
+  const loggedUser = req.user;
+
+  const account = await userModel.findById(id);
+  if (!account) {
+    return next(new NotFoundError("User not found"));
+  }
+
+  if (account.isActive) {
+    return next(new Error("Account is already active", { cause: 409 }));
+  }
+
+  const isOwner = loggedUser._id.toString() === account._id.toString();
+  const isAdmin = loggedUser.role === Roles.ADMIN;
+  const canRestoreSelf =
+    isOwner && account.deletedBy?.toString() === account._id.toString();
+
+  if (!(isAdmin || canRestoreSelf)) {
+    return next(
+      new Error("You are not authorized to restore this account", {
+        cause: 401,
+      })
+    );
+  }
+
+  account.isActive = true;
+  account.deletedBy = undefined;
+  account.deletedAt = undefined;
+  await account.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "User account has been restored successfully",
+    data: {
+      id: account._id,
+      name: account.name,
+      email: account.email,
+      isActive: account.isActive,
+    },
+  });
+};
