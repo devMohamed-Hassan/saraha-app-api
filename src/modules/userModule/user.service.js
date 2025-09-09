@@ -171,3 +171,11 @@ export const deleteAccount = async (req, res, next) => {
     data: { id: account._id, email: account.email },
   });
 };
+
+export const uploadImage = async (req, res, next) => {
+  console.log(req.file);
+  handleSuccess({
+    message: "Done",
+    res,
+  });
+};

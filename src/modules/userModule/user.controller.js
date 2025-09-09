@@ -7,9 +7,11 @@ import {
   restoreAccount,
   shareProfile,
   updateUser,
+  uploadImage,
 } from "./user.service.js";
 import { allowTo, auth } from "../../middlewares/auth.middleware.js";
 import { Roles } from "../../utils/constants/roles.js";
+import { uploadFile } from "../../utils/multer/multer.js";
 
 const router = Router();
 
@@ -24,5 +26,7 @@ router.patch("/:id/deactivate", auth(), deactivate);
 router.patch("/:id/restore-account", auth(false), restoreAccount);
 
 router.delete("/:id", auth(), allowTo(Roles.ADMIN), deleteAccount);
+
+router.post("/upload-image", uploadFile().single("image"), uploadImage);
 
 export default router;
