@@ -112,7 +112,7 @@ export const restoreAccount = async (req, res, next) => {
 
   const account = await userModel.findById(id);
   if (!account) {
-    return next(new NotFoundError("User not found"));
+    return next(new NotFoundError());
   }
 
   if (account.isActive) {
@@ -147,5 +147,27 @@ export const restoreAccount = async (req, res, next) => {
       email: account.email,
       isActive: account.isActive,
     },
+  });
+};
+
+export const deleteAccount = async (req, res, next) => {
+  const { id } = req.params;
+
+  const account = await userModel.findById(id);
+  if (!account) {
+    return next(new Error("Account not found", { cause: 404 }));
+  }
+
+  if (account.role === Roles.ADMIN) {
+    return next(new Error("Admins cannot be deleted", { cause: 403 }));
+  }
+
+  await account.deleteOne();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "User account has been permanently deleted",
+    data: { id: account._id, email: account.email },
   });
 };
