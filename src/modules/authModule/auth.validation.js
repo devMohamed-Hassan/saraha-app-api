@@ -133,3 +133,22 @@ export const confirmUpdateEmailSchema = {
     }),
   }),
 };
+
+// Update Password
+export const updatePasswordSchema = {
+  body: Joi.object({
+    currentPassword: passwordValidator.messages({
+      "any.required": "Current password is required.",
+      "string.empty": "Current password cannot be empty.",
+    }),
+
+    newPassword: passwordValidator
+      .disallow(Joi.ref("currentPassword"))
+      .messages({
+        "any.required": "New password is required.",
+        "string.empty": "New password cannot be empty.",
+        "any.invalid":
+          "New password cannot be the same as the current password.",
+      }),
+  }),
+};
