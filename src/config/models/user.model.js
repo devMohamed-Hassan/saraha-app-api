@@ -42,6 +42,11 @@ const schema = new Schema(
       minlength: 8,
       set: (value) => hash(value),
     },
+    passwordHistory: {
+      type: [String],
+      default: [],
+      //select: false,
+    },
     age: {
       type: Number,
       required: function () {

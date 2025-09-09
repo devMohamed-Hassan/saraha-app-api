@@ -2,7 +2,6 @@ import userModel from "../../config/models/user.model.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import jwt from "jsonwebtoken";
 import { create, find, findById, findOne } from "../../services/db.service.js";
-import { decodeToken, types } from "../../middlewares/auth.middleware.js";
 import { compare } from "../../utils/hash.js";
 import emailEmitter, { emailEvents } from "../../utils/sendEmail/emailEvent.js";
 
@@ -17,6 +16,7 @@ import { OAuth2Client } from "google-auth-library";
 import { Providers } from "../../utils/constants/providers.js";
 import { Roles } from "../../utils/constants/roles.js";
 import { buildOtp } from "../../utils/otp/buildOtp.js";
+import { decodeToken, TokenTypes } from "../../utils/token/decodeToken.js";
 
 const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
@@ -84,7 +84,7 @@ export const login = async (req, res, next) => {
     throw new Error(INVALID_CREDENTIALS_MSG, { cause: 400 });
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -140,7 +140,7 @@ export const login = async (req, res, next) => {
 export const refreshToken = async (req, res, next) => {
   const { authorization } = req.headers;
   const user = await decodeToken({
-    tokenType: types.refresh,
+    tokenType: TokenTypes.REFRESH,
     authorization,
     next,
   });
@@ -174,7 +174,7 @@ export const resendCode = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -241,7 +241,7 @@ export const confirmEmail = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -298,7 +298,7 @@ export const forgotPassword = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -340,7 +340,7 @@ export const verifyForgotOtp = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -390,7 +390,7 @@ export const resetPassword = async (req, res, next) => {
     return next(new UserNotFoundError());
   }
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -644,5 +644,42 @@ export const resendUpdateEmail = async (req, res, next) => {
     success: true,
     message:
       "Verification codes resent to your current and new email addresses.",
+  });
+};
+
+export const updatePassword = async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = req.user;
+
+  const isMatch = compare(currentPassword, user.password);
+  if (!isMatch) {
+    return next(new Error("Current password is incorrect", { cause: 401 }));
+  }
+
+  const isReusedOld = await Promise.any(
+    user.passwordHistory.map((oldPass) => compare(newPassword, oldPass))
+  ).catch(() => false);
+
+  if (isReusedOld) {
+    return next(
+      new Error("You cannot reuse a previous password", { cause: 409 })
+    );
+  }
+
+  user.passwordHistory.push(user.password);
+
+  if (user.passwordHistory.length > 5) {
+    user.passwordHistory.shift();
+  }
+
+  user.password = newPassword;
+  user.credentialChangedAt = new Date();
+
+  await user.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Password updated successfully",
   });
 };

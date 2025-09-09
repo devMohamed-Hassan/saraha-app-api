@@ -11,6 +11,7 @@ import {
   signUpSchema,
   socialLoginSchema,
   updateEmailSchema,
+  updatePasswordSchema,
   verifyForgotOtpSchema,
 } from "./auth.validation.js";
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -72,6 +73,13 @@ router.patch(
   validate(confirmUpdateEmailSchema),
   auth(),
   authServices.confirmUpdateEmail
+);
+
+router.patch(
+  "/update-password",
+  validate(updatePasswordSchema),
+  auth(),
+  authServices.updatePassword
 );
 
 export default router;
