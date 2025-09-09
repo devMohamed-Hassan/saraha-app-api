@@ -440,7 +440,7 @@ export const socialLogin = async (req, res, next) => {
 
   let user = await userModel.findOne({ email });
 
-  if (!user.isActive) {
+  if (user && user.isActive === false) {
     return next(
       new Error("This account has been deactivated.", { cause: 403 })
     );
@@ -455,6 +455,7 @@ export const socialLogin = async (req, res, next) => {
       email,
       name,
       isVerified: true,
+      isActive: true,
       role: Roles.USER,
       provider: Providers.GOOGLE,
       //avatar: picture,
