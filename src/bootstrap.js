@@ -29,7 +29,7 @@ const bootstrap = async (app, express) => {
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   app.use("/message", messageRouter);
-  app.use("/uploads", express.static("./uploads"));
+  app.use("/public/uploads", express.static("./public/uploads"));
 
   app.use((err, req, res, next) => {
     let statusCode = err.cause || err.statusCode || 500;

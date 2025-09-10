@@ -173,12 +173,12 @@ export const deleteAccount = async (req, res, next) => {
   });
 };
 
-export const uploadImage = async (req, res, next) => {
+export const uploadProfileImage = async (req, res, next) => {
   const user = req.user;
 
   const host = `${req.protocol}://${req.get("host")}`;
 
-  user.profileImage.url = `${host}/${req.dest}/${req.file.filename}`;
+  user.profileImage.url = `${host}${req.dest}/${req.file.filename}`;
 
   await user.save();
 

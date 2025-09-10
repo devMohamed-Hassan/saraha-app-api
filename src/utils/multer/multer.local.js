@@ -2,11 +2,14 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 
-export const uploadFile = () => {
+const sanitize = (str) => str.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+export const uploadFile = (folder = "general") => {
   const storage = multer.diskStorage({
     destination: (req, file, callback) => {
-      const dest = `uploads/${req.user.name}_${req.user.id}`;
-      const fullDest = path.resolve(".", dest);
+      const user = req.user;
+      const dest = `/public/uploads/${folder}/${user.id}`;
+      const fullDest = path.resolve(`.${dest}`);
 
       req.dest = dest;
 
@@ -18,8 +21,9 @@ export const uploadFile = () => {
     },
 
     filename: (req, file, callback) => {
-      const name = req.user.name + "_" + file.originalname;
-
+      const user = req.user;
+      const safeName = sanitize(user.name);
+      const name = `${safeName}_${Date.now()}_${file.originalname}`;
       callback(null, name);
     },
   });
