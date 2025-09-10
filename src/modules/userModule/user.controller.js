@@ -27,6 +27,6 @@ router.patch("/:id/restore-account", auth(false), restoreAccount);
 
 router.delete("/:id", auth(), allowTo(Roles.ADMIN), deleteAccount);
 
-router.post("/upload-image", uploadFile().single("image"), uploadImage);
+router.post("/upload-image", auth(), uploadFile().single("image"), uploadImage);
 
 export default router;

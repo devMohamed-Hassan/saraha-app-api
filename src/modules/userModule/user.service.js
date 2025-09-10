@@ -28,7 +28,7 @@ export const shareProfile = async (req, res, next) => {
 
 export const publicProfile = async (req, res, next) => {
   const id = req.params.id;
-  const user = await userModel.findById(id).select("name");
+  const user = await userModel.findById(id).select("name profileImage");
   if (!user) {
     return next(new Error("User not found", { cause: 404 }));
   }
@@ -42,6 +42,7 @@ export const publicProfile = async (req, res, next) => {
     message: "success",
     data: {
       username: user.name,
+      profileImage: user.profileImage.url,
       messageFormUrl,
     },
   });
@@ -173,9 +174,17 @@ export const deleteAccount = async (req, res, next) => {
 };
 
 export const uploadImage = async (req, res, next) => {
-  console.log(req.file);
+  const user = req.user;
+
+  const host = `${req.protocol}://${req.get("host")}`;
+
+  user.profileImage.url = `${host}/${req.dest}/${req.file.filename}`;
+
+  await user.save();
+
   handleSuccess({
-    message: "Done",
+    message: "Profile image uploaded successfully",
     res,
+    data: { profileImage: user.profileImage.url },
   });
 };
