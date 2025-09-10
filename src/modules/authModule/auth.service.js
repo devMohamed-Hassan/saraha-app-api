@@ -701,8 +701,6 @@ export const logout = async (req, res, next) => {
 
   const userAgent = req.headers["user-agent"] || "Unknown device";
 
-  console.log(payload);
-
   await RevokedTokenModel.create({
     jti: payload.jti,
     userId: payload._id,
@@ -718,7 +716,7 @@ export const logout = async (req, res, next) => {
 
 export const logoutFromAllDevices = async (req, res, next) => {
   const user = req.user;
-  
+
   user.credentialChangedAt = new Date();
 
   await user.save();
@@ -727,5 +725,19 @@ export const logoutFromAllDevices = async (req, res, next) => {
     res,
     statusCode: 200,
     message: "Logged out from all devices successfully",
+  });
+};
+
+export const getAllDevices = async (req, res, next) => {
+  const payload = req.payload;
+
+  const devices = await RevokedTokenModel.find({ userId: payload._id })
+    .select("device createdAt expiresAt -_id")
+    .sort({ createdAt: -1 });
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    data: { devices },
   });
 };

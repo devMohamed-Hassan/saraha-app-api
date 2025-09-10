@@ -85,4 +85,6 @@ router.patch(
 router.post("/logout", auth(), authServices.logout);
 router.post("/logout-all", auth(), authServices.logoutFromAllDevices);
 
+router.get("/devices", auth(), authServices.getAllDevices);
+
 export default router;
