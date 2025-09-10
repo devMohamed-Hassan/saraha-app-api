@@ -715,3 +715,17 @@ export const logout = async (req, res, next) => {
     message: "Logged out successfully",
   });
 };
+
+export const logoutFromAllDevices = async (req, res, next) => {
+  const user = req.user;
+  
+  user.credentialChangedAt = new Date();
+
+  await user.save();
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Logged out from all devices successfully",
+  });
+};
