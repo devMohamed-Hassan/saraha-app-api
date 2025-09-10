@@ -3,6 +3,7 @@ import { EmailNotVerifiedError, UserNotFoundError } from "../customErrors.js";
 import { Roles } from "../constants/roles.js";
 import { findById } from "../../services/db.service.js";
 import userModel from "../../config/models/user.model.js";
+import { RevokedTokenModel } from "../../config/models/revokedToken.model.js";
 
 export const TokenTypes = Object.freeze({
   ACCESS: "ACCESS",
@@ -45,7 +46,8 @@ export const decodeToken = async ({
       ? process.env.ADMIN_REFRESH_TOKEN_SECRET
       : process.env.USER_REFRESH_TOKEN_SECRET;
 
-  const secret = tokenType === TokenTypes.ACCESS ? accessSignture : refreshSignture;
+  const secret =
+    tokenType === TokenTypes.ACCESS ? accessSignture : refreshSignture;
 
   const payload = jwt.verify(token, secret);
 
@@ -53,6 +55,14 @@ export const decodeToken = async ({
 
   if (!user) {
     return next(new UserNotFoundError());
+  }
+
+  const revokedToken = await RevokedTokenModel.findOne({ jti: payload.jti });
+
+  if (revokedToken) {
+    return next(
+      new Error("Token has been revoked. Please login again.", { cause: 401 })
+    );
   }
 
   if (!user.isVerified && !user.pendingEmail) {
@@ -66,5 +76,5 @@ export const decodeToken = async ({
     return next(new Error("Token is no longer valid. Please login again."));
   }
 
-  return user;
+  return { user, payload };
 };

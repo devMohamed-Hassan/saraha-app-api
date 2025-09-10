@@ -17,6 +17,8 @@ import { Providers } from "../../utils/constants/providers.js";
 import { Roles } from "../../utils/constants/roles.js";
 import { buildOtp } from "../../utils/otp/buildOtp.js";
 import { decodeToken, TokenTypes } from "../../utils/token/decodeToken.js";
+import { nanoid } from "nanoid";
+import { RevokedTokenModel } from "../../config/models/revokedToken.model.js";
 
 const client = new OAuth2Client();
 const INVALID_CREDENTIALS_MSG = "Invalid email or password";
@@ -110,11 +112,16 @@ export const login = async (req, res, next) => {
       ? process.env.ADMIN_REFRESH_TOKEN_SECRET
       : process.env.USER_REFRESH_TOKEN_SECRET;
 
+  const jwtid = nanoid();
+
   const accessToken = jwt.sign(payload, accessSignture, {
     expiresIn: `1h`,
+    jwtid,
   });
+
   const refreshToken = jwt.sign(payload, refreshSignture, {
     expiresIn: `7d`,
+    jwtid,
   });
 
   handleSuccess({
@@ -139,7 +146,8 @@ export const login = async (req, res, next) => {
 
 export const refreshToken = async (req, res, next) => {
   const { authorization } = req.headers;
-  const user = await decodeToken({
+
+  const { user, payload } = await decodeToken({
     tokenType: TokenTypes.REFRESH,
     authorization,
     next,
@@ -150,6 +158,9 @@ export const refreshToken = async (req, res, next) => {
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET
       : process.env.USER_ACCESS_TOKEN_SECRET;
 
+  console.log(payload);
+  const jwtid = payload.jti;
+
   const accessToken = jwt.sign(
     {
       _id: user._id,
@@ -159,6 +170,7 @@ export const refreshToken = async (req, res, next) => {
     accessSignture,
     {
       expiresIn: `1h`,
+      jwtid,
     }
   );
   handleSuccess({ res, statusCode: 202, data: { accessToken } });
@@ -681,5 +693,25 @@ export const updatePassword = async (req, res, next) => {
     res,
     statusCode: 200,
     message: "Password updated successfully",
+  });
+};
+
+export const logout = async (req, res, next) => {
+  const payload = req.payload;
+
+  const userAgent = req.headers["user-agent"] || "Unknown device";
+
+  console.log(payload);
+
+  await RevokedTokenModel.create({
+    jti: payload.jti,
+    userId: payload._id,
+    device: userAgent,
+  });
+
+  handleSuccess({
+    res,
+    statusCode: 200,
+    message: "Logged out successfully",
   });
 };

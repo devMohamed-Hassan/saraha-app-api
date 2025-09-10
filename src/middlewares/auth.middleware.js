@@ -1,10 +1,9 @@
 import { decodeToken } from "../utils/token/decodeToken.js";
 
-
 export const auth = (activation = true) => {
   return async (req, res, next) => {
     const { authorization } = req.headers;
-    const user = await decodeToken({
+    const { user, payload } = await decodeToken({
       authorization,
       next,
     });
@@ -16,6 +15,7 @@ export const auth = (activation = true) => {
       }
     }
     req.user = user;
+    req.payload = payload;
     next();
   };
 };

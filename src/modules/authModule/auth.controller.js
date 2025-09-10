@@ -82,4 +82,6 @@ router.patch(
   authServices.updatePassword
 );
 
+router.post("/logout", auth(), authServices.logout);
+
 export default router;
