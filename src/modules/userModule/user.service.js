@@ -7,7 +7,6 @@ import {
 import { Roles } from "../../utils/constants/roles.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 
-
 export const getUserProfile = async (req, res, next) => {
   const user = req.user;
   handleSuccess({
@@ -168,9 +167,9 @@ export const deleteAccount = async (req, res, next) => {
     return next(new Error("Admins cannot be deleted", { cause: 403 }));
   }
 
-  await deleteFolder({ folder: `users/${account._id}` });
+  await deleteFolder({ path: `users/${account._id}` });
 
-  await account.deleteOne();
+  //await account.deleteOne();
 
   handleSuccess({
     res,
