@@ -1,12 +1,12 @@
 import userModel from "../../config/models/user.model.js";
 import {
+  deleteFolder,
   destroyImage,
   uploadImage,
 } from "../../services/cloudinary.service.js";
 import { Roles } from "../../utils/constants/roles.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
-import fs from "fs";
-import path from "path";
+
 
 export const getUserProfile = async (req, res, next) => {
   const user = req.user;
@@ -167,22 +167,8 @@ export const deleteAccount = async (req, res, next) => {
   if (account.role === Roles.ADMIN) {
     return next(new Error("Admins cannot be deleted", { cause: 403 }));
   }
-  console.log(account.profileImage);
 
-  if (account.profileImage?.url) {
-    const folderPath = account.profileImage.url.split("/");
-    folderPath.pop();
-    const folder = folderPath.join("/");
-
-    const absoluteFolder = path.join(process.cwd(), folder);
-
-    if (fs.existsSync(absoluteFolder)) {
-      fs.rmSync(absoluteFolder, { recursive: true, force: true });
-      console.log("Folder deleted:", absoluteFolder);
-    } else {
-      console.log("Folder not found:", absoluteFolder);
-    }
-  }
+  await deleteFolder({ folder: `users/${account._id}` });
 
   await account.deleteOne();
 
