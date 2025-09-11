@@ -7,6 +7,7 @@ import {
   restoreAccount,
   shareProfile,
   updateUser,
+  uploadCoverImages,
   uploadProfileImage,
 } from "./user.service.js";
 import { allowTo, auth } from "../../middlewares/auth.middleware.js";
@@ -30,13 +31,22 @@ router.patch("/:id/restore-account", auth(false), restoreAccount);
 
 router.delete("/:id", auth(), allowTo(Roles.ADMIN), deleteAccount);
 
-router.post(
+router.patch(
   "/profile-image",
   auth(),
   cloudUploadFile().single("image"),
   handleMulterError,
   validate(uploadImageSchema),
   uploadProfileImage
+);
+
+router.patch(
+  "/cover-images",
+  auth(),
+  cloudUploadFile().single("image"),
+  handleMulterError,
+  validate(uploadImageSchema),
+  uploadCoverImages
 );
 
 export default router;

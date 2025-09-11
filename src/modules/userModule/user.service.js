@@ -1,6 +1,9 @@
 import userModel from "../../config/models/user.model.js";
+import {
+  destroyImage,
+  uploadImage,
+} from "../../services/cloudinary.service.js";
 import { Roles } from "../../utils/constants/roles.js";
-import { cloudinaryConfig } from "../../utils/multer/cloudinary.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import fs from "fs";
 import path from "path";
@@ -195,22 +198,43 @@ export const uploadProfileImage = async (req, res, next) => {
   const user = req.user;
   const file = req.file;
 
-  const { public_id, secure_url } = await cloudinaryConfig().uploader.upload(
-    file.path,
-    {
-      folder: `${process.env.APP_NAME}/users/${user._id}/profile`,
-    }
-  );
+  const { public_id, secure_url } = await uploadImage({
+    path: file.path,
+    folder: `users/${user._id}/profile`,
+  });
+
   if (user.profileImage?.public_id) {
-    await cloudinaryConfig().uploader.destroy(user.profileImage.public_id);
+    await destroyImage(user.profileImage.public_id);
   }
 
   user.profileImage = { public_id, secure_url };
-
   await user.save();
 
   handleSuccess({
     message: "Profile image uploaded successfully",
+    res,
+    data: { profileImage: { public_id, url: secure_url } },
+  });
+};
+
+export const uploadCoverImages = async (req, res, next) => {
+  const user = req.user;
+  const file = req.file;
+
+  const { public_id, secure_url } = await uploadImage({
+    path: file.path,
+    folder: `users/${user._id}/cover`,
+  });
+
+  if (user.coverImage?.public_id) {
+    await destroyImage(user.coverImage.public_id);
+  }
+
+  user.coverImage = { public_id, secure_url };
+  await user.save();
+
+  handleSuccess({
+    message: "Cover image uploaded successfully",
     res,
     data: { profileImage: { public_id, url: secure_url } },
   });

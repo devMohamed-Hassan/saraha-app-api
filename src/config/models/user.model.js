@@ -75,6 +75,10 @@ const schema = new Schema(
       public_id: String,
       secure_url: String,
     },
+    coverImage: {
+      public_id: String,
+      secure_url: String,
+    },
     isVerified: {
       type: Boolean,
       default: false,
