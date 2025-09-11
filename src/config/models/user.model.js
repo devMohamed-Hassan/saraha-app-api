@@ -72,7 +72,8 @@ const schema = new Schema(
       set: (value) => (value ? encrypt(value) : value),
     },
     profileImage: {
-      url: String,
+      public_id: String,
+      secure_url: String,
     },
     isVerified: {
       type: Boolean,

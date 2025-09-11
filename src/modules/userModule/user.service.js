@@ -1,5 +1,6 @@
 import userModel from "../../config/models/user.model.js";
 import { Roles } from "../../utils/constants/roles.js";
+import { cloudinaryConfig } from "../../utils/multer/cloudinary.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 import fs from "fs";
 import path from "path";
@@ -192,25 +193,25 @@ export const deleteAccount = async (req, res, next) => {
 
 export const uploadProfileImage = async (req, res, next) => {
   const user = req.user;
+  const file = req.file;
 
-  const host = `${req.protocol}://${req.get("host")}`;
-
-  if (user.profileImage?.url) {
-    const absoluteFile = path.join(process.cwd(), user.profileImage.url);
-
-    if (fs.existsSync(absoluteFile)) {
-      fs.unlinkSync(absoluteFile);
-      console.log("Old profile image deleted:", absoluteFile);
+  const { public_id, secure_url } = await cloudinaryConfig().uploader.upload(
+    file.path,
+    {
+      folder: `${process.env.APP_NAME}/users/${user._id}/profile`,
     }
+  );
+  if (user.profileImage?.public_id) {
+    await cloudinaryConfig().uploader.destroy(user.profileImage.public_id);
   }
 
-  user.profileImage.url = `${req.dest}/${req.file.filename}`;
+  user.profileImage = { public_id, secure_url };
 
   await user.save();
 
   handleSuccess({
     message: "Profile image uploaded successfully",
     res,
-    data: { profileImage: `${host}${req.dest}/${req.file.filename}` },
+    data: { profileImage: { public_id, url: secure_url } },
   });
 };

@@ -11,11 +11,10 @@ import {
 } from "./user.service.js";
 import { allowTo, auth } from "../../middlewares/auth.middleware.js";
 import { Roles } from "../../utils/constants/roles.js";
-import { uploadFile } from "../../utils/multer/multer.local.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { uploadImageSchema } from "./user.validation.js";
 import { handleMulterError } from "../../middlewares/handleMulterError.middleware.js";
-
+import { cloudUploadFile } from "../../utils/multer/multer.cloud.js";
 
 const router = Router();
 
@@ -34,7 +33,7 @@ router.delete("/:id", auth(), allowTo(Roles.ADMIN), deleteAccount);
 router.post(
   "/profile-image",
   auth(),
-  uploadFile("profile").single("image"),
+  cloudUploadFile().single("image"),
   handleMulterError,
   validate(uploadImageSchema),
   uploadProfileImage
