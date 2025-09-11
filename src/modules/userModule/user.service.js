@@ -169,7 +169,7 @@ export const deleteAccount = async (req, res, next) => {
 
   await deleteFolder({ path: `users/${account._id}` });
 
-  //await account.deleteOne();
+  await account.deleteOne();
 
   handleSuccess({
     res,
