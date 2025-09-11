@@ -12,6 +12,10 @@ import {
 import { allowTo, auth } from "../../middlewares/auth.middleware.js";
 import { Roles } from "../../utils/constants/roles.js";
 import { uploadFile } from "../../utils/multer/multer.local.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { uploadImageSchema } from "./user.validation.js";
+import { handleMulterError } from "../../middlewares/handleMulterError.middleware.js";
+
 
 const router = Router();
 
@@ -31,13 +35,8 @@ router.post(
   "/profile-image",
   auth(),
   uploadFile("profile").single("image"),
-  uploadProfileImage
-);
-
-router.post(
-  "/cover-image",
-  auth(),
-  uploadFile("cover").single("image"),
+  handleMulterError,
+  validate(uploadImageSchema),
   uploadProfileImage
 );
 

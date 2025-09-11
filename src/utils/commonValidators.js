@@ -54,3 +54,28 @@ export const otpValidator = Joi.string()
     "string.pattern.base": "OTP must contain only numbers.",
     "any.required": "OTP is required.",
   });
+
+const fileTypes = {
+  image: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+};
+
+export const imageFileSchema = Joi.object({
+  fieldname: Joi.string().required(),
+  originalname: Joi.string().required(),
+  encoding: Joi.string().required(),
+  mimetype: Joi.string()
+    .valid(...fileTypes.image)
+    .required()
+    .messages({
+      "any.only": "Only image files are allowed!",
+    }),
+  destination: Joi.string().required(),
+  filename: Joi.string().required(),
+  path: Joi.string().required(),
+  size: Joi.number()
+    .max(2 * 1024 * 1024) // 2MB
+    .required()
+    .messages({
+      "number.max": "File too large! Maximum size allowed is 2MB.",
+    }),
+});
