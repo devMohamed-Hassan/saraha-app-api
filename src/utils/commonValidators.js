@@ -60,7 +60,7 @@ const fileTypes = {
 };
 
 export const imageFileSchema = Joi.object({
-  fieldname: Joi.string().required(),
+  fieldname: Joi.string().valid("image", "images").required(),
   originalname: Joi.string().required(),
   encoding: Joi.string().required(),
   mimetype: Joi.string()

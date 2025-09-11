@@ -6,6 +6,7 @@ export const validate = (schemas) => (req, res, next) => {
     { key: "params", schema: schemas.params },
     { key: "query", schema: schemas.query },
     { key: "file", schema: schemas.file },
+    { key: "files", schema: schemas.files },
   ];
 
   let allErrors = [];
