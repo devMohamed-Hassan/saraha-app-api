@@ -32,11 +32,11 @@ export const shareProfile = async (req, res, next) => {
 
 export const publicProfile = async (req, res, next) => {
   const id = req.params.id;
-  const user = await userModel.findById(id).select("name profileImage");
+  const user = await userModel.findById(id).select("name profileImage coverImage");
   if (!user) {
     return next(new Error("User not found", { cause: 404 }));
   }
-  const messageFormUrl = `${req.protocol}://${req.get("host")}/send-message/${
+  const messageFormUrl = `${req.protocol}://${req.get("host")}/messege/send/${
     user.id
   }`;
 
@@ -46,7 +46,8 @@ export const publicProfile = async (req, res, next) => {
     message: "success",
     data: {
       username: user.name,
-      profileImage: user.profileImage.url,
+      profileImage: user.profileImage.secure_url,
+      coverImage: user.coverImage.secure_url,
       messageFormUrl,
     },
   });

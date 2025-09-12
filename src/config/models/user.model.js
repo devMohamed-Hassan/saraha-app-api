@@ -19,7 +19,7 @@ const OtpSchema = new Schema(
   { _id: false }
 );
 
-const schema = new Schema(
+const userSchema = new Schema(
   {
     name: {
       type: String,
@@ -120,7 +120,7 @@ const schema = new Schema(
   }
 );
 
-schema.virtual("message").get(function () {
+userSchema.virtual("message").get(function () {
   const hours = new Date().getHours();
 
   const timeMsg =
@@ -144,18 +144,18 @@ function commonTransform(doc, ret) {
     ...ret,
     _id: undefined,
     __v: undefined,
-    // password: undefined,
+    password: undefined,
     // isDeleted: undefined,
     // deletedAt: undefined,
   };
 }
 
-schema.methods.deactivate = function (deletedBy) {
+userSchema.methods.deactivate = function (deletedBy) {
   this.isActive = false;
   this.deletedBy = deletedBy;
   this.deletedAt = new Date();
   return this.save();
 };
 
-const userModel = model("users", schema);
+const userModel = model("users", userSchema);
 export default userModel;
