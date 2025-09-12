@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import { welcome } from "./utils/welcome.js";
 import authRouter from "./modules/authModule/auth.controller.js";
 import userRouter from "./modules/userModule/user.controller.js";
 import messageRouter from "./modules/messageModule/message.controller.js";
@@ -59,6 +60,7 @@ const bootstrap = async (app, express) => {
   await dbConnection();
 
   // Routes
+  app.get("/", welcome);
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   app.use("/message", messageRouter);
