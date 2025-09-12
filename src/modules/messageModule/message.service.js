@@ -30,6 +30,30 @@ export const sendMessage = async (req, res, next) => {
     res,
     data: message,
   });
+};
 
+export const getMessages = async (req, res, next) => {
+  const userId = req.user._id;
 
+  const messages = await messageModel
+    .find({ receiver: userId })
+    .sort({ createdAt: -1 });
+
+  const formattedMessages = messages.map((msg) => ({
+    _id: msg._id,
+    receiver: msg.receiver,
+    content: msg.content,
+    type: msg.type,
+    isAnonymous: msg.isAnonymous,
+    status: msg.status,
+    createdAt: msg.createdAt,
+    updatedAt: msg.updatedAt,
+    imageUrl: msg.image?.secure_url || null,
+  }));
+
+  handleSuccess({
+    message: "Messages retrieved successfully",
+    res,
+    data: formattedMessages,
+  });
 };
