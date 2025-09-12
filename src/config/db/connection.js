@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import chalk from "chalk";
-
-dotenv.config();
 
 const dbConnection = async () => {
   await mongoose
