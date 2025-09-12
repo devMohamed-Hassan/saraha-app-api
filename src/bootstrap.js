@@ -10,11 +10,53 @@ import dbConnection from "./config/db/connection.js";
 import cors from "cors";
 import chalk from "chalk";
 import morgan from "morgan";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const bootstrap = async (app, express) => {
   const PORT = process.env.PORT || 5000;
   app.use(express.json());
-  app.use(cors());
+
+  const whitelist = [];
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        if (whitelist.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(
+            new Error(
+              "CORS policy: Access denied. This API is restricted. Please contact the developer <Mohamed Hassan/> for access."
+            )
+          );
+        }
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true,
+    })
+  );
+
+  app.use(helmet());
+
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        success: false,
+        status: 429,
+        errMsg: "Too many requests from this IP, please try again later.",
+      },
+    })
+  );
 
   // Error handler for invalid JSON
   app.use((err, req, res, next) => {
