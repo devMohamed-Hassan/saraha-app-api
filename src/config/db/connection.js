@@ -6,7 +6,7 @@ dotenv.config();
 
 const dbConnection = async () => {
   await mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.ATLAS_URI)
     .then(() => {
       console.log(chalk.green.bold("✓ Database Connected Successfully"));
     })
