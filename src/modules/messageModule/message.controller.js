@@ -4,7 +4,10 @@ import { handleMulterError } from "../../middlewares/handleMulterError.middlewar
 import { cloudUploadFile } from "../../utils/multer/multer.cloud.js";
 import { auth } from "../../middlewares/auth.middleware.js";
 
-const router = Router();
+const router = Router({
+  caseSensitive: true,
+  strict: true,
+});
 
 router.post(
   "/send/:receiverId",

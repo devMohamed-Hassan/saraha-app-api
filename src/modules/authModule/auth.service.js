@@ -158,7 +158,8 @@ export const refreshToken = async (req, res, next) => {
       ? process.env.ADMIN_ACCESS_TOKEN_SECRET
       : process.env.USER_ACCESS_TOKEN_SECRET;
 
-  console.log(payload);
+
+      
   const jwtid = payload.jti;
 
   const accessToken = jwt.sign(

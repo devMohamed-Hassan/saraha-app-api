@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import chalk from "chalk";
 
 dotenv.config();
 
@@ -7,10 +8,10 @@ const dbConnection = async () => {
   await mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
-      console.log("Database Connected Successfully");
+      console.log(chalk.green.bold("✓ Database Connected Successfully"));
     })
     .catch(() => {
-      console.log("Database Connection faild");
+      console.error(chalk.red.bold("✗ Database Connection Failed: "));
     });
 };
 

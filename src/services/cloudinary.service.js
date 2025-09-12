@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { cloudinaryConfig } from "../utils/multer/cloudinary.js";
 
 export const uploadImage = async ({ path, folder = "others" }) => {
@@ -30,8 +31,9 @@ export const deleteFolder = async ({ path = "" }) => {
     await cloudinaryConfig().api.delete_folder(fullPath);
   } catch (error) {
     console.warn(
-      `Cloudinary: folder ${fullPath} not deleted ->`,
-      error.message
+      chalk.yellow.bold("Cloudinary:") +
+        ` folder ${chalk.cyan(fullPath)} not deleted -> ` +
+        chalk.red(error.message)
     );
     return false;
   }

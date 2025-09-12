@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import { emailTemplate } from "./emailTemplate.js";
 import { sendEmail } from "./sendEmail.js";
+import chalk from "chalk";
 
 const emailEmitter = new EventEmitter();
 
@@ -43,9 +44,16 @@ emailEmitter.on("sendEmail", async ({ type, email, userName, otp }) => {
 
     await sendEmail({ to: email, html, subject: config.subject });
 
-    console.log(`${config.subject} sent to ${email}`);
+    console.log(
+      chalk.green.bold("Email:") +
+        ` ${chalk.cyan(config.subject)} sent to ${chalk.yellow(email)}`
+    );
   } catch (err) {
-    console.error(`Failed to send ${type} email:`, err.message);
+    console.error(
+      chalk.red.bold("Failed to send email:") +
+        ` ${chalk.yellow(type)} -> ` +
+        chalk.white(err.message)
+    );
   }
 });
 
