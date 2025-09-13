@@ -120,7 +120,7 @@ const userSchema = new Schema(
   }
 );
 
-userSchema.virtual("message").get(function () {
+userSchema.virtual("greeting").get(function () {
   const hours = new Date().getHours();
 
   const timeMsg =
@@ -136,17 +136,22 @@ userSchema.virtual("message").get(function () {
 });
 
 function commonTransform(doc, ret) {
-  const message = ret.greeting;
+  const greeting = ret.greeting;
   delete ret.greeting;
+
+  ret.passwordHistory = undefined;
+  ret.passwordOtp = undefined;
+  ret.emailOtp = undefined;
+  ret.newEmailOtp = undefined;
+
   return {
-    message,
+    greeting,
     id: ret._id,
     ...ret,
     _id: undefined,
     __v: undefined,
     password: undefined,
-    // isDeleted: undefined,
-    // deletedAt: undefined,
+    deletedAt: undefined,
   };
 }
 
