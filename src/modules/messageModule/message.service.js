@@ -1,15 +1,36 @@
 import messageModel from "../../config/models/message.model.js";
+import userModel from "../../config/models/user.model.js";
 import { uploadImage } from "../../services/cloudinary.service.js";
 import { handleSuccess } from "../../utils/responseHandler.js";
 
 export const sendMessage = async (req, res, next) => {
-  const { content } = req.body;
+  const content = req.body?.content || "";
   const { receiverId } = req.params;
+
+  const receiver = await userModel.findById(receiverId);
+
+  if (!receiver || !receiver.isVerified || !receiver.isActive) {
+    return next(new Error(`Receiver with this ID  not found`, { cause: 404 }));
+  }
+
+  const hasContent = req.body?.content?.trim();
+  const hasFile = !!req.file;
+
+  if (!hasContent && !hasFile) {
+    return next(
+      new Error("Message content is required if no image is provided", {
+        cause: 400,
+      })
+    );
+  }
+
+  const isImage = !!req.file;
+  const type = isImage ? "image" : "text";
 
   let messageData = {
     receiver: receiverId,
     content,
-    type: "text",
+    type,
     isAnonymous: true,
   };
 
