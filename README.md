@@ -2,7 +2,6 @@
 
 A secure and anonymous messaging platform built with Node.js, Express.js, and MongoDB. Saraha App allows users to send anonymous messages to each other while maintaining privacy and security.
 
-> **💰 Paid Access Required :** ما بعملش حاجة ببلاش انا
 
 ## Table of Contents
 
