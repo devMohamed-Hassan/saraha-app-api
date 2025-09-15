@@ -58,10 +58,16 @@ A secure and anonymous messaging platform built with Node.js, Express.js, and Mo
 
 ## API Documentation
 
-### EC2 AWS Base URL
+### Deployment URLs:
+### AWS EC2
 ```
 http://ec2-98-84-149-71.compute-1.amazonaws.com
 ```
+### Vercel
+```
+https://saraha-app-sigma.vercel.app
+```
+
 
 ### Authentication Endpoints
 
