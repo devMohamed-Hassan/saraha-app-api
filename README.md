@@ -193,6 +193,9 @@ GET /message/inbox
 Authorization: Bearer <token>
 ```
 
+> For complete API documentation [API Documentation](https://www.postman.com/maintenance-candidate-2675300/workspace/public-workspace/collection/45449526-398a78e9-5c89-4713-91c5-092436239439?action=share&creator=45449526&active-environment=45449526-c3ef379c-add5-4408-90b5-3407db5366fb).
+
+
 ## Security Features
 
 - **Password Security**: Bcrypt hashing with salt rounds
