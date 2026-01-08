@@ -7,7 +7,6 @@ A secure and anonymous messaging platform built with Node.js, Express.js, and Mo
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Configuration](#configuration)
 - [API Documentation](#api-documentation)
 - [Security Features](#security-features)
 
@@ -53,6 +52,18 @@ A secure and anonymous messaging platform built with Node.js, Express.js, and Mo
 - **Validation**: Joi
 - **Security**: Helmet, CORS, Rate Limiting
 - **Utilities**: Bcrypt, Crypto-js, Nanoid
+
+## Security Features
+
+- **Password Security**: Bcrypt hashing with salt rounds
+- **Data Encryption**: Sensitive data encrypted using crypto-js
+- **JWT Tokens**: Secure authentication with refresh token mechanism
+- **Rate Limiting**: 100 requests per 15 minutes per IP
+- **CORS Protection**: Configurable cross-origin resource sharing
+- **Input Validation**: Comprehensive Joi schema validation
+- **Security Headers**: Helmet.js for security headers
+- **OTP Verification**: Time-based OTP for email verification
+- **Session Management**: Multi-device session tracking and management
 
 
 
@@ -194,21 +205,4 @@ Authorization: Bearer <token>
 ```
 
 > For complete API documentation [API Documentation](https://www.postman.com/maintenance-candidate-2675300/workspace/public-workspace/collection/45449526-398a78e9-5c89-4713-91c5-092436239439?action=share&creator=45449526&active-environment=45449526-c3ef379c-add5-4408-90b5-3407db5366fb).
-
-
-## Security Features
-
-- **Password Security**: Bcrypt hashing with salt rounds
-- **Data Encryption**: Sensitive data encrypted using crypto-js
-- **JWT Tokens**: Secure authentication with refresh token mechanism
-- **Rate Limiting**: 100 requests per 15 minutes per IP
-- **CORS Protection**: Configurable cross-origin resource sharing
-- **Input Validation**: Comprehensive Joi schema validation
-- **Security Headers**: Helmet.js for security headers
-- **OTP Verification**: Time-based OTP for email verification
-- **Session Management**: Multi-device session tracking and management
-
-> **⚠️ Note:** This application was carefully developed to provide an **anonymous messaging experience**.  
-> For access credentials (Bearer token) and the Postman collection, please **contact the developer**.
-
 
