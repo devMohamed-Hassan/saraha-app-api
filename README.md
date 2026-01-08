@@ -7,8 +7,8 @@ A secure and anonymous messaging platform built with Node.js, Express.js, and Mo
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [API Documentation](#api-documentation)
 - [Security Features](#security-features)
+- [API Documentation](#api-documentation)
 
 ## Features
 
